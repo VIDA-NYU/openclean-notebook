@@ -1,0 +1,3 @@
+future
+openclean-core==0.1.0
+histore>=0.1.3
