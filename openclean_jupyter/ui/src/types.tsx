@@ -1,4 +1,4 @@
-export interface ResquestResult {
+export interface RequestResult {
   columns: Column[];
   commands: string[];
   dataset: Dataset;

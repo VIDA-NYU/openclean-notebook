@@ -1,12 +1,12 @@
 import * as React from 'react';
 import CommAPI from './CommAPI';
-import {ResquestResult, ColumnMetadata} from './types';
+import {RequestResult, ColumnMetadata} from './types';
 import {DatasetSample} from './DatasetSample';
 interface TableSampleProps {
   data: string;
 }
 interface TableSampleState {
-  result: ResquestResult;
+  result: RequestResult;
 }
 
 class SpreadSheet extends React.PureComponent<
@@ -17,7 +17,7 @@ class SpreadSheet extends React.PureComponent<
     super(props);
     this.commPowersetAnalysis = new CommAPI(
       'spreadsheet',
-      (msg: ResquestResult) => {
+      (msg: RequestResult) => {
         this.setState({result: msg});
       }
     );
@@ -37,7 +37,7 @@ class SpreadSheet extends React.PureComponent<
     };
   }
 
-  getMetadata(requestResult: ResquestResult) {
+  getMetadata(requestResult: RequestResult) {
     const columnNames = [requestResult.columns.map(col => col.name)];
     const rowsValues = requestResult.rows.map(row => row.values);
     const columnsMetadata: ColumnMetadata[] = [];
@@ -72,12 +72,28 @@ class SpreadSheet extends React.PureComponent<
     return hit;
   }
 
+  onCommandClick(command: string, columnName: string) {
+    this.commPowersetAnalysis.call({
+      dataset: this.state.result.dataset,
+      action: 'exec',
+      command,
+      args: {column: columnName},
+    });
+  }
+
   render() {
     const hit = this.getMetadata(this.state.result);
+
     return (
       <div className="mt-2">
         <div className="d-flex flex-row">
-          <DatasetSample hit={hit} />
+          <DatasetSample
+            hit={hit}
+            requestResult={this.state.result}
+            onCommandClick={(command, columnName) => {
+              this.onCommandClick(command, columnName);
+            }}
+          />
         </div>
       </div>
     );

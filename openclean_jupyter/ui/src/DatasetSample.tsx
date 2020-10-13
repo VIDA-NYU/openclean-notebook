@@ -1,6 +1,6 @@
 import * as React from 'react';
 import {useTable, Column, ColumnInstance, HeaderGroup} from 'react-table';
-import {SearchResult, ColumnMetadata} from './types';
+import {SearchResult, ColumnMetadata, RequestResult} from './types';
 import './DatasetSample.css';
 import {VegaLite} from 'react-vega';
 import {TopLevelSpec as VlSpec} from 'vega-lite';
@@ -240,8 +240,12 @@ function TableColumnView(props: {
 }
 
 // Compact and Detail view share the same body content. Just the header will change.
-function TableCompactDetailView(props: {tableProps: TableProps}) {
-  const {columns, data, hit, typeView} = props.tableProps;
+function TableCompactDetailView(props: {
+  tableProps: TableProps;
+  requestResult: RequestResult;
+  onCommandClick: (command: string, type: string) => void;
+}) {
+  const {columns, data, hit, typeView, requestResult} = props.tableProps;
   const {getTableBodyProps, headerGroups, rows, prepareRow} = useTable({
     columns,
     data,
@@ -249,7 +253,7 @@ function TableCompactDetailView(props: {tableProps: TableProps}) {
   return (
     <>
       <thead>
-        {headerGroups.map((headerGroup, i) => (
+        {headerGroups.map((headerGroup) => (
           <tr {...headerGroup.getHeaderGroupProps()}>
             {headerGroup.headers.map((column, i) => (
               <th
@@ -264,6 +268,27 @@ function TableCompactDetailView(props: {tableProps: TableProps}) {
                 }}
               >
                 {column.render('Header')}
+                <div className="dropdown">
+                  <button type="button" className="btn btn-link">
+                    <span className="caret"></span>
+                  </button>
+                  <div className="dropdown-content">
+                    {requestResult.commands.map(command => (
+                      <div
+                        key={command}
+                        className="menu-link"
+                        onClick={() =>
+                          props.onCommandClick(
+                            command,
+                            String(column.render('Header'))
+                          )
+                        }
+                      >
+                        {command}
+                      </div>
+                    ))}
+                  </div>
+                </div>
                 <br />
                 <TypeBadges column={hit.metadata.columns[i]} />
               </th>
@@ -305,14 +330,18 @@ interface TableProps {
   data: string[][];
   hit: SearchResult;
   typeView: tableViews;
+  requestResult: RequestResult;
+  onCommandClick: (command: string, type: string) => void;
 }
 
 function Table(props: TableProps) {
-  const {columns, data, hit, typeView} = props;
+  const {columns, data, hit, typeView, requestResult} = props;
   const {getTableProps, headerGroups} = useTable({
     columns,
     data,
   });
+  console.log('Columns');
+  console.log(columns);
   return (
     <table {...getTableProps()} className="table table-hover small">
       {typeView === tableViews.COLUMN ? (
@@ -320,7 +349,13 @@ function Table(props: TableProps) {
         <TableColumnView headerGroups={headerGroups} hit={hit} />
       ) : (
         // Compact or Detail View
-        <TableCompactDetailView tableProps={props} />
+        <TableCompactDetailView
+          tableProps={props}
+          requestResult={requestResult}
+          onCommandClick={(command, columnName) => {
+            props.onCommandClick(command, columnName);
+          }}
+        />
       )}
     </table>
   );
@@ -328,6 +363,8 @@ function Table(props: TableProps) {
 
 interface TableSampleProps {
   hit: SearchResult;
+  requestResult: RequestResult;
+  onCommandClick: (command: string, type: string) => void;
 }
 interface TableSampleState {
   typeView: tableViews;
@@ -400,6 +437,10 @@ class DatasetSample extends React.PureComponent<
               data={rows}
               hit={hit}
               typeView={this.state.typeView}
+              requestResult={this.props.requestResult}
+              onCommandClick={(command, columnName) => {
+                this.props.onCommandClick(command, columnName);
+              }}
             />
           </div>
         </div>
