@@ -65,7 +65,7 @@ setup(
     author='Heiko Mueller',
     author_email='heiko.muller@gmail.com',
     license_file='LICENSE',
-    packages=find_packages(exclude=('tests',)),
+    packages=find_packages(exclude=['tests', 'js', 'node_modules']),
     include_package_data=True,
     extras_require=extras_require,
     tests_require=tests_require,

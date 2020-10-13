@@ -19,7 +19,7 @@ from typing import Dict
 """Relative path to the folder containing Javascript libraries and HTML
 templates
 ."""
-JAVASCRIPT = '../ui/js/{}'
+JAVASCRIPT = '../ui/{}'
 TEMPLATES = '../ui/templates/{}'
 
 
@@ -40,10 +40,6 @@ def make_html(template: str, library: str, script: str, data: Dict) -> str:
     package: string
         Name of a Javascript package file (build bundle) that contains the
         script that is being embedded into the returned HTML string.
-    script: str
-        Name of the script that is being called when the generated HTML page
-        loads. The script will reveive two arguments: (1) the DOM element
-        identifier for rendering, and (2) the data dictionary.
     data: dict
         Dictionary containing data that is being embedded into the returned
         HTML string and passed to the script as the second argument.
@@ -63,7 +59,7 @@ def make_html(template: str, library: str, script: str, data: Dict) -> str:
     return html_template.format(
         id=id,
         bundle=js_bundle,
-        script=script,
+        # script=script,
         data=json.dumps(data)
     )
 
