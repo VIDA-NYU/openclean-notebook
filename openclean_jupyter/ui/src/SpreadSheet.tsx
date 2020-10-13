@@ -13,6 +13,7 @@ class SpreadSheet extends React.PureComponent<
   TableSampleProps,
   TableSampleState
 > {
+  commPowersetAnalysis: CommAPI;
   constructor(props: TableSampleProps) {
     super(props);
     this.commPowersetAnalysis = new CommAPI(

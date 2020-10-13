@@ -156,8 +156,7 @@ def spreadsheet(name: str, engine: str):
     from IPython.core.display import display, HTML
     view = make_html(
             template='spreadsheet.html',
-            library='build/opencleanVis.js', # library.js',
-            script='load_spreadsheet',
+            library='build/opencleanVis.js',
             data=DatasetLocator(dataset=name, engine=engine).serialize()
         )
     display(HTML(view))

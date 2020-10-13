@@ -23,7 +23,7 @@ JAVASCRIPT = '../ui/{}'
 TEMPLATES = '../ui/templates/{}'
 
 
-def make_html(template: str, library: str, script: str, data: Dict) -> str:
+def make_html(template: str, library: str, data: Dict) -> str:
     """Create HTML string from a given template. The package name references a
     (bundeled) Javascript file containint all required Javascript scripts. The
     script parameter is the name of the main Javascript routine in the package
@@ -59,7 +59,6 @@ def make_html(template: str, library: str, script: str, data: Dict) -> str:
     return html_template.format(
         id=id,
         bundle=js_bundle,
-        # script=script,
         data=json.dumps(data)
     )
 
