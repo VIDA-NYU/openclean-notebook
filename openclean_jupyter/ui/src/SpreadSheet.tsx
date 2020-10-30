@@ -41,14 +41,8 @@ class SpreadSheet extends React.PureComponent<
   getMetadata(requestResult: RequestResult) {
     const columnNames = [requestResult.columns.map(col => col.name)];
     const rowsValues = requestResult.rows.map(row => row.values);
-    const columnsMetadata: ColumnMetadata[] = [];
-    columnNames[0].forEach(col => {
-      columnsMetadata.push({
-        name: col,
-        structural_type: 'undefined',
-        semantic_types: [],
-      });
-    });
+
+    const columnsMetadata: ColumnMetadata[] = requestResult.metadata ? requestResult.metadata.columns : [];
     const metadata = {
       id: 'id',
       name: 'dataset',

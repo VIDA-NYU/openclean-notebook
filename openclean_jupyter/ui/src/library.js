@@ -2,8 +2,6 @@
  * Initial load to fetch dataset rows and list of available commands.
  */
 function load_spreadsheet(div_id, data) {
-    print('data load_spreadsheet')
-    print(data)
     fetch_spreadsheet(div_id, {dataset: data, action: 'load'});
 }
 
@@ -31,8 +29,6 @@ function exec_command(div_id, dataset, engine) {
  * fetches dataset rows.
  */
 function fetch_spreadsheet(div_id, data) {
-    print('data fetch_spreadsheet')
-    print(data)
     let comm = Jupyter.notebook.kernel.comm_manager.new_comm('spreadsheet');
     // Show loader while we are fetching the data and the list of available
     // commands.

@@ -5,6 +5,7 @@ export interface RequestResult {
   offset: number;
   row_count: number;
   rows: Row[];
+  metadata?: Metadata;
 }
 export interface Column {
   id: number;

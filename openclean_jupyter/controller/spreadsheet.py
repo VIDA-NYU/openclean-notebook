@@ -14,7 +14,8 @@ from openclean.data.column import Column
 from openclean_jupyter.controller.base import DatasetLocator
 from openclean_jupyter.controller.comm import register_handler
 from openclean_jupyter.controller.html import make_html
-
+import openclean_jupyter.metadata.profiling.datamart as datamart
+import random
 
 """Default number of rows returned by a fetch request."""
 DEFAULT_LIMIT = 10
@@ -78,7 +79,7 @@ def spreadsheet_api(request: Dict) -> Dict:
 
 def fetch_rows(
     dataset: DatasetLocator, limit: Optional[int] = DEFAULT_LIMIT,
-    offset: Optional[int] = 0
+    offset: Optional[int] = 0, ismetadata: Optional[bool] = True
 ) -> Dict:
     """Fetch limited number of rows from a dataset. Returns a serialization of
     the columns in the dataset schema and the fetched rows. The result has the
@@ -104,7 +105,8 @@ def fetch_rows(
         Maximum number of rows that are being fetched.
     offset: int, default=0
         Index of the first row that is being fetched.
-
+    metadata: bool, default=True
+        Whether include the metadata or not .
     Returns
     -------
     dict
@@ -118,10 +120,32 @@ def fetch_rows(
             columns.append({'id': col.colid, 'name': col})
         else:
             columns.append({'id': -1, 'name': col})
+
+    # Get metadata using datamart-profiler
+    metadataJSON = {}
+    if ismetadata:
+        metadata = datamart.run(df)
+        metadataJSON = {
+        "id": str(random.randint(0, 10)),
+        "name": '',
+        "description": '',
+        "size": metadata["size"] if "size" in metadata else 0,
+        "nb_rows": metadata["nb_rows"],
+        "nb_profiled_rows": metadata["nb_profiled_rows"],
+        "materialize": {},
+        "date": "",
+        "sample": metadata["sample"] if "sample" in metadata else "",
+        "source": 'openclean-notebook',
+        "version": "0.1",
+        "columns": metadata["columns"],
+        "types": metadata["types"]
+    }
+
     # Serialize dataset rows.
     row_count = df.shape[0]
     end = min(offset + limit, row_count)
     rows = list()
+
     for rid, values in df[offset:end].iterrows():
         rows.append({'id': rid, 'values': list(values)})
     # For now we also add the command listing to the respose. That should
@@ -132,7 +156,8 @@ def fetch_rows(
         'rows': rows,
         'offset': offset,
         'rowCount': row_count,
-        'commands': dataset.engine.register.serialize()
+        'commands': dataset.engine.register.serialize(),
+        'metadata': metadataJSON
     }
 
 

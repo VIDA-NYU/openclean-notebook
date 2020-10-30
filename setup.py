@@ -16,7 +16,9 @@ from setuptools import setup, find_packages
 install_requires = [
     'future',
     'openclean-core==0.1.0',
-    'histore>=0.1.3'
+    'histore>=0.1.3',
+    'datamart-profiler==0.8',
+    'grpcio==1.32.0'
 ]
 
 
