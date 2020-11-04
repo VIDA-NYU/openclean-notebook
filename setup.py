@@ -38,9 +38,8 @@ extras_require = {
 }
 
 
-# Get the version string from the version.py file in the openclean_metanome
-# package. Based on:
-# https://stackoverflow.com/questions/458550
+# Get the version string from the version.py file in the openclean_jupyter
+# package. Based on: https://stackoverflow.com/questions/458550
 with open(os.path.join('openclean_jupyter', 'version.py'), 'rt') as f:
     filecontent = f.read()
 match = re.search(r"^__version__\s*=\s*['\"]([^'\"]*)['\"]", filecontent, re.M)
@@ -58,11 +57,11 @@ with open('README.rst', 'rt') as f:
 setup(
     name='openclean-jupyter',
     version=version,
-    description='OpenClean Metanome Python Package',
+    description='openclean Jupyter UI Package',
     long_description=readme,
     long_description_content_type='text/x-rst',
     keywords='data cleaning',
-    url='https://github.com/VIDA-NYU/openclean-metanome',
+    url='https://github.com/VIDA-NYU/openclean_jupyter',
     author='Heiko Mueller',
     author_email='heiko.muller@gmail.com',
     license_file='LICENSE',
@@ -75,9 +74,9 @@ setup(
         'License :: OSI Approved :: BSD License',
         'Operating System :: OS Independent',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
         'Programming Language :: Python'
     ]
 )

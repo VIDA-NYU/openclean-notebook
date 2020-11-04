@@ -9,7 +9,7 @@
 
 from typing import Dict, Optional
 
-from openclean.data.column import Column
+from openclean.data.types import Column
 
 from openclean_jupyter.controller.base import DatasetLocator
 from openclean_jupyter.controller.comm import register_handler
