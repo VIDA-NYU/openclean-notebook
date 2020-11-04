@@ -10,7 +10,7 @@ from typing import Callable, List, Union
 
 import pandas as pd
 
-from openclean import op
+from openclean.operator.transform.update import update
 from openclean_jupyter.datastore.base import Datastore
 
 
@@ -59,7 +59,7 @@ class CommandRegistry(object):
                 an updated snapshot that is then committed to the datastore.
                 """
                 df = self.datastore.checkout(name=self.name)
-                df = op.update(df=df, columns=columns, func=func)
+                df = update(df=df, columns=columns, func=func)
                 return self.datastore.commit(df=df, name=self.name)
             # Add the created update operator as a class method for the data
             # frame transformer collection.
@@ -128,5 +128,5 @@ class Transformers(object):
             outputs a (modified) list of value(s).
         """
         df = self.datastore.checkout(name=self.name)
-        df = op.update(df=df, columns=columns, func=func)
+        df = update(df=df, columns=columns, func=func)
         return self.datastore.commit(df=df, name=self.name)
