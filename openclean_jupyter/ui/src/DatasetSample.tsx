@@ -196,7 +196,8 @@ function TableColumnView(props: {
 }) {
   return (
     <tbody>
-      {props.headerGroups[0].headers.map((column, i) => {
+      {props.headerGroups &&
+      props.headerGroups[0].headers.map((column, i) => {
         const columnStatistics = (
           <td style={{minWidth: 400}}>
             <ul style={{listStyle: 'none', columnCount: 2, columnGap: 10}}>
