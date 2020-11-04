@@ -7,7 +7,7 @@
 
 include LICENSE
 include *.rst
-recursive-include openclean_metanome *.py *.sql
+recursive-include openclean_metanome *.py
 prune docs/_build
 recursive-include docs *.py
 recursive-include docs *.rst
