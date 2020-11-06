@@ -165,7 +165,7 @@ function VegaPlot(props: {
       data={{values: dataVega}}
     />
   );
-  const message = <p className="small">Nothing to show.</p>;
+  const message = <p style={{textAlign: 'center'}} className="small">Nothing to show.</p>;
   if (dataVega) {
     return props.isHeader ? (
       <th scope="col" {...props.column.getHeaderProps()}>
@@ -253,9 +253,9 @@ function TableCompactDetailView(props: {
   });
   return (
     <>
-      <thead>
+      <thead style={{textAlign: 'center'}}>
         {headerGroups.map((headerGroup) => (
-          <tr {...headerGroup.getHeaderGroupProps()}>
+          <tr style={{textAlign: 'center'}}{...headerGroup.getHeaderGroupProps()}>
             {headerGroup.headers.map((column, i) => (
               <th
                 scope="col"
@@ -266,6 +266,7 @@ function TableCompactDetailView(props: {
                   background: '#eee',
                   zIndex: 1,
                   width: 200,
+                  textAlign: 'center',
                 }}
               >
                 {column.render('Header')}
@@ -298,7 +299,7 @@ function TableCompactDetailView(props: {
         ))}
         {typeView === tableViews.DETAIL &&
           headerGroups.map((headerGroup, i) => (
-            <tr {...headerGroup.getHeaderGroupProps()}>
+            <tr style={{textAlign: 'center'}}{...headerGroup.getHeaderGroupProps()}>
               {headerGroup.headers.map((column, i) => (
                 <VegaPlot
                   key={`headerPlot_${i}`}
@@ -316,7 +317,7 @@ function TableCompactDetailView(props: {
           return (
             <tr {...row.getRowProps()}>
               {row.cells.map(cell => {
-                return <td {...cell.getCellProps()}>{cell.render('Cell')}</td>;
+                return <td style={{textAlign: 'center'}}{...cell.getCellProps()}>{cell.render('Cell')}</td>;
               })}
             </tr>
           );

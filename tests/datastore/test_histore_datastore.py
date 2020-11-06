@@ -11,7 +11,7 @@ import pandas as pd
 import pytest
 
 from histore import PersistentArchiveManager
-from openclean import op
+from openclean.operator.transform.update import update
 from openclean_jupyter.datastore.histore import HISTOREDatastore
 
 
@@ -57,11 +57,11 @@ def test_dataset_history(store, dataset):
     """Test updates to a given dataset and retrieving all dataset versions."""
     df = store.load(df=dataset, name='my_dataset')
     df = store.commit(
-        df=op.update(df=df, columns='B', func=1),
+        df=update(df=df, columns='B', func=1),
         name='my_dataset'
     )
     df = store.commit(
-        df=op.update(df=df, columns='C', func=2),
+        df=update(df=df, columns='C', func=2),
         name='my_dataset'
     )
     snapshots = store.snapshots('my_dataset')
@@ -93,7 +93,7 @@ def test_dataset_metadata(store, dataset):
     store.metadata(name='my_dataset')\
         .set_annotation(column_id=1, key='type', value='int')
     df = store.commit(
-        df=op.update(df=df, columns='B', func=1),
+        df=update(df=df, columns='B', func=1),
         name='my_dataset'
     )
     store.metadata(name='my_dataset')\

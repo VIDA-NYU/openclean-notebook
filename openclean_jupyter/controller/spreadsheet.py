@@ -124,7 +124,7 @@ def fetch_rows(
     # Get metadata using datamart-profiler
     metadataJSON = {}
     if ismetadata:
-        metadata = datamart.run(df)
+        metadata = datamart.run(df.reset_index(drop=True))
         metadataJSON = {
         "id": str(random.randint(0, 10)),
         "name": '',
