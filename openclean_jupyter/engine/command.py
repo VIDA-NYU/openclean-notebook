@@ -58,9 +58,9 @@ class CommandRegistry(object):
                 the evaluates the function on each data frame row to create
                 an updated snapshot that is then committed to the datastore.
                 """
-                df = self.datastore.checkout(name=self.name)
+                df = self.datastore.checkout(name=self.name).df
                 df = update(df=df, columns=columns, func=func)
-                return self.datastore.commit(df=df, name=self.name)
+                return self.datastore.commit(df=df, name=self.name).df
             # Add the created update operator as a class method for the data
             # frame transformer collection.
             setattr(Transformers, name, update_op)
@@ -126,7 +126,11 @@ class Transformers(object):
         func: callable or openclean.function.eval.base.EvalFunction
             Callable that accepts a data frame row as the only argument and
             outputs a (modified) list of value(s).
+
+        Returns
+        -------
+        pd.DataFrame
         """
-        df = self.datastore.checkout(name=self.name)
+        df = self.datastore.checkout(name=self.name).df
         df = update(df=df, columns=columns, func=func)
-        return self.datastore.commit(df=df, name=self.name)
+        return self.datastore.commit(df=df, name=self.name).df

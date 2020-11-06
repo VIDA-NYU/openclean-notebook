@@ -7,39 +7,21 @@
 
 """Unit tests for the HISTORE-based implementation of the data store."""
 
-import pandas as pd
 import pytest
 
-from histore import PersistentArchiveManager
-from openclean import op
-from openclean_jupyter.datastore.histore import HISTOREDatastore
-
-
-@pytest.fixture
-def dataset():
-    """Returns a basic data frame with three columns and two rows."""
-    return pd.DataFrame(data=[[1, 2, 3], [3, 4, 5]], columns=['A', 'B', 'C'])
-
-
-@pytest.fixture
-def store(tmpdir):
-    """Create a new instance of the HISTORE data store."""
-    return HISTOREDatastore(
-        basedir=str(tmpdir),
-        histore=PersistentArchiveManager(basedir=str(tmpdir))
-    )
+from openclean.operator.transform.update import update
 
 
 def test_create_dataset(store, dataset):
     """Test creating a dataset from a given data frame."""
-    df_1 = store.load(df=dataset, name='my_dataset')
+    df_1 = store.load(df=dataset, name='my_dataset').df
     assert df_1.shape == (2, 3)
-    df_1 = store.checkout('my_dataset')
+    df_1 = store.checkout('my_dataset').df
     assert df_1.shape == (2, 3)
     # Error when loading (creating) new dataset with existing name.
     with pytest.raises(ValueError):
         store.load(df=dataset, name='my_dataset')
-    df_2 = store.load(df=dataset, name='my_second_dataset')
+    df_2 = store.load(df=dataset, name='my_second_dataset').df
     assert df_2.shape == (2, 3)
     # Delete first dataset.
     store.drop('my_dataset')
@@ -49,35 +31,29 @@ def test_create_dataset(store, dataset):
     with pytest.raises(ValueError):
         store.drop('my_dataset')
     # The second dataset is still accessible.
-    df_2 = store.checkout('my_second_dataset')
+    df_2 = store.checkout('my_second_dataset').df
     assert df_2.shape == (2, 3)
 
 
 def test_dataset_history(store, dataset):
     """Test updates to a given dataset and retrieving all dataset versions."""
-    df = store.load(df=dataset, name='my_dataset')
-    df = store.commit(
-        df=op.update(df=df, columns='B', func=1),
-        name='my_dataset'
-    )
-    df = store.commit(
-        df=op.update(df=df, columns='C', func=2),
-        name='my_dataset'
-    )
+    df = store.load(df=dataset, name='my_dataset').df
+    df = store.commit(df=update(df=df, columns='B', func=1), name='my_dataset').df
+    df = store.commit(df=update(df=df, columns='C', func=2), name='my_dataset').df
     snapshots = store.snapshots('my_dataset')
     assert len(snapshots) == 3
     # Version 1
-    df = store.checkout('my_dataset', version=snapshots[0].version)
+    df = store.checkout('my_dataset', version=snapshots[0].version).df
     assert list(df['A']) == [1, 3]
     assert list(df['B']) == [2, 4]
     assert list(df['C']) == [3, 5]
     # Version 2
-    df = store.checkout('my_dataset', version=snapshots[1].version)
+    df = store.checkout('my_dataset', version=snapshots[1].version).df
     assert list(df['A']) == [1, 3]
     assert list(df['B']) == [1, 1]
     assert list(df['C']) == [3, 5]
     # Version 3
-    df = store.checkout('my_dataset', version=snapshots[2].version)
+    df = store.checkout('my_dataset', version=snapshots[2].version).df
     assert list(df['A']) == [1, 3]
     assert list(df['B']) == [1, 1]
     assert list(df['C']) == [2, 2]
@@ -89,13 +65,11 @@ def test_dataset_metadata(store, dataset):
     """
     # Create two snapshots for a dataset and annotate one column for each with
     # a different data type string.
-    df = store.load(df=dataset, name='my_dataset')
+    df = store.load(df=dataset, name='my_dataset').df
     store.metadata(name='my_dataset')\
         .set_annotation(column_id=1, key='type', value='int')
-    df = store.commit(
-        df=op.update(df=df, columns='B', func=1),
-        name='my_dataset'
-    )
+    df = store\
+        .commit(df=update(df=df, columns='B', func=1), name='my_dataset').df
     store.metadata(name='my_dataset')\
         .set_annotation(column_id=1, key='type', value='str')
     # Assert that the different snapshots have different type annotations for
@@ -105,3 +79,13 @@ def test_dataset_metadata(store, dataset):
     assert annos.get_annotation(column_id=1, key='type') == 'int'
     annos = store.metadata(name='my_dataset')
     assert annos.get_annotation(column_id=1, key='type') == 'str'
+
+
+def test_last_dataset_version(store, dataset):
+    """Test getting the version identifier for the last snapshot of a dataset."""
+    ds = store.load(df=dataset, name='my_dataset')
+    assert store.last_version('my_dataset') == ds.version
+    ds = store.checkout('my_dataset')
+    assert store.last_version('my_dataset') == ds.version
+    with pytest.raises(ValueError):
+        store.last_version('unknown_dataset')

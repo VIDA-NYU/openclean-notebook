@@ -11,13 +11,15 @@ import uuid
 from typing import Optional
 
 from histore import PersistentArchiveManager
+from openclean_jupyter.datastore.cache import CachedDatastore
 from openclean_jupyter.datastore.histore import HISTOREDatastore
 from openclean_jupyter.engine.base import OpencleanEngine
 from openclean_jupyter.engine.registry import registry
 
 
 def DB(
-    basedir: Optional[str], create: Optional[bool] = False
+    basedir: Optional[str], create: Optional[bool] = False,
+    cache_size: Optional[int] = 1
 ) -> OpencleanEngine:
     """Create an instance of the openclean-goes-jupyter engine. This test
     implementation uses HISTORE as the underlying datastore. All files will
@@ -36,6 +38,10 @@ def DB(
     create: bool, default=False
         Create a fresh instance of the archive manager if True. This will
         delete all files in the base directory.
+    cache_size: int, default=1
+        Max. number of archives for which a dataset is maintained in cache.
+        By default, a cache of size one is used. If the cache_size is None
+        no caching will occur.
 
     Returns
     -------
@@ -50,6 +56,8 @@ def DB(
     # Create the engine components and the engine instance itself.
     histore = PersistentArchiveManager(basedir=basedir, create=create)
     datastore = HISTOREDatastore(basedir=histore.basedir, histore=histore)
+    if cache_size > 0:
+        datastore = CachedDatastore(datastore=datastore, cache_size=cache_size)
     engine = OpencleanEngine(identifier=engine_id, datastore=datastore)
     # Register the new engine instance before returning it.
     registry[engine_id] = engine

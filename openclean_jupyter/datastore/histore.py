@@ -10,15 +10,15 @@ a new HISTORE archive will be maintained. This archive is augmented with
 storage of dataset metadata.
 """
 
+from typing import Dict, List, Optional, Union
+
 import os
 import pandas as pd
-
-from typing import Dict, List, Optional, Union
 
 from histore.archive.base import Archive
 from histore.archive.manager.base import ArchiveManager
 
-from openclean_jupyter.datastore.base import Datastore, DatasetSnapshot
+from openclean_jupyter.datastore.base import Dataset, Datastore, SnapshotHandle
 from openclean_jupyter.metadata.profiling.base import Profiler
 from openclean_jupyter.metadata.metastore.fs import FileSystemMetadataStore
 
@@ -45,9 +45,7 @@ class HISTOREDatastore(Datastore):
         self.basedir = basedir
         self.histore = histore
 
-    def checkout(
-        self, name: str, version: Optional[int] = None
-    ) -> pd.DataFrame:
+    def checkout(self, name: str, version: Optional[int] = None) -> Dataset:
         """Get a specific version of a dataset. The dataset is identified by
         the unique name and the dataset version by the unique version
         identifier.
@@ -63,19 +61,35 @@ class HISTOREDatastore(Datastore):
 
         Returns
         -------
-        pd.DataFrame
+        openclean_jupyter.datastore.base.Dataset
 
         Raises
         ------
         ValueError
         """
-        return self._get_archive(name=name).checkout(version=version)
+        archive = self._get_archive(name=name)
+        # Get the data frame for the dataset snapshot.
+        df = archive.checkout(version=version)
+        # Get the snapshot handle for the dataset version.
+        if version is None:
+            snapshot = archive.snapshots().last_snapshot()
+        else:
+            snapshot = archive.snapshots().get(version)
+        # Return dataset handle.
+        return Dataset(
+            df=df,
+            version=snapshot.version,
+            created_at=snapshot.created_at
+        )
 
     def commit(
         self, df: pd.DataFrame, name: str, action: Optional[Dict] = None
-    ) -> pd.DataFrame:
+    ) -> Dataset:
         """Insert a new version for a dataset. If the dataset name is unknown a
         new dataset archive will be created.
+
+        Returns the inserted data frame (after potentially modifying the row
+        indexes) and the version identifier for the commited version.
 
         Parameters
         ----------
@@ -89,11 +103,15 @@ class HISTOREDatastore(Datastore):
 
         Returns
         -------
-        pd.DataFrame
+        openclean_jupyter.datastore.base.Dataset
         """
         archive = self._get_archive(name=name)
         snapshot = archive.commit(doc=df)
-        return archive.checkout(version=snapshot.version)
+        return Dataset(
+            df=archive.checkout(version=snapshot.version),
+            version=snapshot.version,
+            created_at=snapshot.created_at
+        )
 
     def drop(self, name: str):
         """Delete the full history for the dataset with the given name. Raises
@@ -151,12 +169,32 @@ class HISTOREDatastore(Datastore):
             return descriptor.identifier()
         raise ValueError("unknown archive {}".format(name))
 
+    def last_version(self, name: str) -> int:
+        """Get a identifier for the last version of a dataset.
+
+        Raises a ValueError if the dataset or the given version are unknown.
+
+        Parameters
+        ----------
+        name: string
+            Unique dataset name.
+
+        Returns
+        -------
+        int
+
+        Raises
+        ------
+        ValueError
+        """
+        return self._get_archive(name=name).snapshots().last_snapshot().version
+
     def load(
         self, df: pd.DataFrame, name: str,
         primary_key: Optional[Union[List[str], str]] = None,
         profiler: Optional[Profiler] = None
-    ) -> pd.DataFrame:
-        """Create an initial dataset archive that is idetified by the given
+    ) -> Dataset:
+        """Create an initial dataset archive that is identified by the given
         name. The given data frame represents the first snapshot in the created
         archive.
 
@@ -178,7 +216,7 @@ class HISTOREDatastore(Datastore):
 
         Returns
         -------
-        pd.DataFrame
+        openclean_jupyter.datastore.base.Dataset
 
         Raises
         ------
@@ -232,7 +270,7 @@ class HISTOREDatastore(Datastore):
         )
         return FileSystemMetadataStore(basedir=metadir)
 
-    def snapshots(self, name: str) -> List[DatasetSnapshot]:
+    def snapshots(self, name: str) -> List[SnapshotHandle]:
         """Get list of handles for all versions of a given dataset. The datset
         is identified by the unique dataset name.
 
@@ -245,7 +283,7 @@ class HISTOREDatastore(Datastore):
 
         Returns
         -------
-        list of openclean_jupyter.datastore.base.DatasetHandle
+        list of openclean_jupyter.datastore.base.SnapshotHandle
 
         Raises
         ------
@@ -253,7 +291,7 @@ class HISTOREDatastore(Datastore):
         """
         result = list()
         for s in self._get_archive(name=name).snapshots():
-            ds = DatasetSnapshot(
+            ds = SnapshotHandle(
                 version=s.version,
                 created_at=s.transaction_time
             )

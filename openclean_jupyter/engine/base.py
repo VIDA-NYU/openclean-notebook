@@ -10,16 +10,15 @@ import pandas as pd
 from typing import Dict, List, Optional, Union
 
 from openclean_jupyter.controller.spreadsheet import spreadsheet
-from openclean_jupyter.datastore.base import Datastore, DatasetSnapshot
+from openclean_jupyter.datastore.base import Datastore, SnapshotHandle
 from openclean_jupyter.engine.command import CommandRegistry
 from openclean_jupyter.metadata.metastore.base import MetadataStore
 
 
 class OpencleanEngine(object):
-    """The idea iof the engine is to wrap a datastore and provide additional
-    functionality to show a spreadsheet view, register new cels, ...
-
-    Many of the methods below are direct copies of the methods that are
+    """The idea of the engine is to wrap a datastore and provide additional
+    functionality to show a spreadsheet view, register new commands, etc. Many
+    of the methods for this class are direct copies of the methods that are
     implemented by the data store.
     """
     def __init__(self, identifier: str, datastore: Datastore):
@@ -99,7 +98,8 @@ class OpencleanEngine(object):
         -------
         pd.DataFrame
         """
-        return self.datastore.commit(df=df, name=name)
+        df, _ = self.datastore.commit(df=df, name=name)
+        return df
 
     def drop_dataset(self, name: str):
         """Delete the full history for the dataset with the given name. Raises
@@ -137,7 +137,7 @@ class OpencleanEngine(object):
         # Embed the spreadsheet view into the notebook.
         spreadsheet(name=name, engine=self.identifier)
 
-    def history(self, name: str) -> List[DatasetSnapshot]:
+    def history(self, name: str) -> List[SnapshotHandle]:
         """Get list of snapshot handles for all versions of a given dataset.
         The datset is identified by the unique dataset name.
 
@@ -150,7 +150,7 @@ class OpencleanEngine(object):
 
         Returns
         -------
-        list of openclean_jupyter.datastore.base.DatasetSnapshot
+        list of openclean_jupyter.datastore.base.SnapshotHandle
 
         Raises
         ------

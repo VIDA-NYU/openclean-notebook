@@ -10,32 +10,34 @@ versions of a data frame.
 """
 
 from abc import ABCMeta, abstractmethod
-
-import pandas as pd
-
+from dataclasses import dataclass
 from datetime import datetime
 from typing import Dict, List, Optional, Union
+
+import pandas as pd
 
 from openclean_jupyter.metadata.profiling.base import Profiler
 from openclean_jupyter.metadata.metastore.base import MetadataStore
 
 
-class DatasetSnapshot(object):
+@dataclass
+class SnapshotHandle(object):
     """Object containing basic information and metadata that is being
     maintained for each version of a dataset in the datastore.
     """
-    def __init__(self, version: int, created_at: datetime):
-        """Initialize the dataset information.
+    # Unique version identifier.
+    version: int = None
+    # Timestamp when the dataset version was created.
+    created_at: datetime = None
 
-        Parameters
-        ----------
-        version: int
-            Unique version identifier.
-        created_at: datetime.datetime
-            Timestamp when the dataset versionwas created.
-        """
-        self.version = version
-        self.created_at = created_at
+
+@dataclass
+class Dataset(SnapshotHandle):
+    """The dataset captures the data frame that is associated with a dataset
+    snapshot and the version identifier.
+    """
+    # Data frame containing the data for the dataset snapshot.
+    df: pd.DataFrame = None
 
 
 class Datastore(metaclass=ABCMeta):  # pragma: no cover
@@ -47,12 +49,12 @@ class Datastore(metaclass=ABCMeta):  # pragma: no cover
     created by the user. Each dataset is identified by a unique name.
     """
     @abstractmethod
-    def checkout(
-        self, name: str, version: Optional[int] = None
-    ) -> pd.DataFrame:
+    def checkout(self, name: str, version: Optional[int] = None) -> Dataset:
         """Get a specific version of a dataset. The dataset is identified by
         the unique name and the dataset version by the unique version
         identifier.
+
+        Returns the data frame and version number for the dataset snapshot.
 
         Raises a ValueError if the dataset or the given version are unknown.
 
@@ -65,7 +67,7 @@ class Datastore(metaclass=ABCMeta):  # pragma: no cover
 
         Returns
         -------
-        pd.DataFrame
+        openclean_jupyter.datastore.base.Dataset
 
         Raises
         ------
@@ -76,9 +78,12 @@ class Datastore(metaclass=ABCMeta):  # pragma: no cover
     @abstractmethod
     def commit(
         self, df: pd.DataFrame, name: str, action: Optional[Dict] = None
-    ) -> pd.DataFrame:
+    ) -> Dataset:
         """Insert a new version for a dataset. If the dataset name is unknown a
         new dataset archive will be created.
+
+        Returns the inserted data frame (after potentially modifying the row
+        indexes) and the version identifier for the commited version.
 
         Parameters
         ----------
@@ -92,7 +97,7 @@ class Datastore(metaclass=ABCMeta):  # pragma: no cover
 
         Returns
         -------
-        pd.DataFrame
+        openclean_jupyter.datastore.base.Dataset
         """
         raise NotImplementedError()
 
@@ -113,11 +118,32 @@ class Datastore(metaclass=ABCMeta):  # pragma: no cover
         raise NotImplementedError()
 
     @abstractmethod
+    def last_version(self, name: str) -> int:
+        """Get a identifier for the last version of a dataset.
+
+        Raises a ValueError if the dataset or the given version are unknown.
+
+        Parameters
+        ----------
+        name: string
+            Unique dataset name.
+
+        Returns
+        -------
+        int
+
+        Raises
+        ------
+        ValueError
+        """
+        raise NotImplementedError()
+
+    @abstractmethod
     def load(
         self, df: pd.DataFrame, name: str,
         primary_key: Optional[Union[List[str], str]] = None,
         profiler: Optional[Profiler] = None
-    ) -> pd.DataFrame:
+    ) -> Dataset:
         """Create an initial dataset archive that is idetified by the given
         name. The given data frame represents the first snapshot in the created
         archive.
@@ -140,7 +166,7 @@ class Datastore(metaclass=ABCMeta):  # pragma: no cover
 
         Returns
         -------
-        pd.DataFrame
+        openclean_jupyter.datastore.base.Dataset
 
         Raises
         ------
@@ -176,7 +202,7 @@ class Datastore(metaclass=ABCMeta):  # pragma: no cover
         raise NotImplementedError()
 
     @abstractmethod
-    def snapshots(self, name: str) -> List[DatasetSnapshot]:
+    def snapshots(self, name: str) -> List[SnapshotHandle]:
         """Get list of handles for all versions of a given dataset. The datset
         is identified by the unique dataset name.
 
@@ -189,7 +215,7 @@ class Datastore(metaclass=ABCMeta):  # pragma: no cover
 
         Returns
         -------
-        list of openclean_jupyter.datastore.base.DatasetHandle
+        list of openclean_jupyter.datastore.base.SnapshotHandle
 
         Raises
         ------

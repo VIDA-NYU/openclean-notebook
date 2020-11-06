@@ -126,20 +126,20 @@ def fetch_rows(
     if ismetadata:
         metadata = datamart.run(df)
         metadataJSON = {
-        "id": str(random.randint(0, 10)),
-        "name": '',
-        "description": '',
-        "size": metadata["size"] if "size" in metadata else 0,
-        "nb_rows": metadata["nb_rows"],
-        "nb_profiled_rows": metadata["nb_profiled_rows"],
-        "materialize": {},
-        "date": "",
-        "sample": metadata["sample"] if "sample" in metadata else "",
-        "source": 'openclean-notebook',
-        "version": "0.1",
-        "columns": metadata["columns"],
-        "types": metadata["types"]
-    }
+            "id": str(random.randint(0, 10)),
+            "name": '',
+            "description": '',
+            "size": metadata["size"] if "size" in metadata else 0,
+            "nb_rows": metadata["nb_rows"],
+            "nb_profiled_rows": metadata["nb_profiled_rows"],
+            "materialize": {},
+            "date": "",
+            "sample": metadata["sample"] if "sample" in metadata else "",
+            "source": 'openclean-notebook',
+            "version": "0.1",
+            "columns": metadata["columns"],
+            "types": metadata["types"]
+        }
 
     # Serialize dataset rows.
     row_count = df.shape[0]
