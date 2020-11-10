@@ -10,7 +10,7 @@ import pandas as pd
 from typing import Dict, List, Optional, Union
 
 from openclean_jupyter.controller.spreadsheet import spreadsheet
-from openclean_jupyter.datastore.base import Datastore, SnapshotHandle
+from openclean_jupyter.datastore.base import Datastore, Datasource, SnapshotHandle
 from openclean_jupyter.engine.command import CommandRegistry
 from openclean_jupyter.metadata.metastore.base import MetadataStore
 
@@ -159,7 +159,7 @@ class OpencleanEngine(object):
         return self.datastore.snapshots(name=name)
 
     def load_dataset(
-        self, df: pd.DataFrame, name: str,
+        self, source: Datasource, name: str,
         primary_key: Optional[Union[List[str], str]] = None,
         profiler: str = None
     ) -> pd.DataFrame:
@@ -171,8 +171,9 @@ class OpencleanEngine(object):
 
         Parameters
         ----------
-        df: pd.DataFrame
-            Data frame containing the first versio of the archived dataset.
+        source: pd.DataFrame or string
+            Data frame or file containing the first version of the archived
+            dataset.
         name: string
             Unique dataset name.
             profiler: string, default=None
@@ -189,7 +190,7 @@ class OpencleanEngine(object):
         ------
         ValueError
         """
-        return self.datastore.load(df=df, name=name)
+        return self.datastore.load(source=source, name=name)
 
     def metadata(
         self, name: str, version: Optional[int] = None

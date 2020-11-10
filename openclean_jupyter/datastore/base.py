@@ -12,12 +12,18 @@ versions of a data frame.
 from abc import ABCMeta, abstractmethod
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Dict, List, Optional, Union
+from histore.document.csv.base import CSVFile
+from typing import Dict, List, Optional, Tuple, Union
 
 import pandas as pd
 
 from openclean_jupyter.metadata.profiling.base import Profiler
 from openclean_jupyter.metadata.metastore.base import MetadataStore
+
+
+"""Type aliases for API methods."""
+# Data sources for loading are either pandas data frames or references to files.
+Datasource = Tuple[pd.DataFrame, CSVFile, str]
 
 
 @dataclass
@@ -140,7 +146,7 @@ class Datastore(metaclass=ABCMeta):  # pragma: no cover
 
     @abstractmethod
     def load(
-        self, df: pd.DataFrame, name: str,
+        self, source: Datasource, name: str,
         primary_key: Optional[Union[List[str], str]] = None,
         profiler: Optional[Profiler] = None
     ) -> Dataset:
@@ -152,8 +158,9 @@ class Datastore(metaclass=ABCMeta):  # pragma: no cover
 
         Parameters
         ----------
-        df: pd.DataFrame
-            Data frame containing the first versio of the archived dataset.
+        source: pd.DataFrame or string
+            Data frame or file containing the first version of the archived
+            dataset.
         name: string
             Unique dataset name.
         primary_key: string or list, default=None

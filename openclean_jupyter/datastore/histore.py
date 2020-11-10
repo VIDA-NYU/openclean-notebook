@@ -18,7 +18,7 @@ import pandas as pd
 from histore.archive.base import Archive
 from histore.archive.manager.base import ArchiveManager
 
-from openclean_jupyter.datastore.base import Dataset, Datastore, SnapshotHandle
+from openclean_jupyter.datastore.base import Dataset, Datastore, Datasource, SnapshotHandle
 from openclean_jupyter.metadata.profiling.base import Profiler
 from openclean_jupyter.metadata.metastore.fs import FileSystemMetadataStore
 
@@ -190,7 +190,7 @@ class HISTOREDatastore(Datastore):
         return self._get_archive(name=name).snapshots().last_snapshot().version
 
     def load(
-        self, df: pd.DataFrame, name: str,
+        self, source: Datasource, name: str,
         primary_key: Optional[Union[List[str], str]] = None,
         profiler: Optional[Profiler] = None
     ) -> Dataset:
@@ -202,8 +202,9 @@ class HISTOREDatastore(Datastore):
 
         Parameters
         ----------
-        df: pd.DataFrame
-            Data frame containing the first versio of the archived dataset.
+        source: pd.DataFrame or string
+            Data frame or file containing the first version of the archived
+            dataset.
         name: string
             Unique dataset name.
         primary_key: string or list, default=None
@@ -224,9 +225,12 @@ class HISTOREDatastore(Datastore):
         """
         descriptor = self.histore.create(name=name, primary_key=primary_key)
         archive = self.histore.get(descriptor.identifier())
-        snapshot = archive.commit(doc=df)
+        snapshot = archive.commit(doc=source)
         if profiler is not None:
-            doc = profiler.profile(df)
+            # Ensure that we have a data frame for profiling.
+            if isinstance(source, str):
+                source = archive.checkout()
+            doc = profiler.profile(source)
             self.metadata(name=name, version=snapshot.version)\
                 .set_annotation('profiler', doc)
         return self.checkout(name=name, version=snapshot.version)

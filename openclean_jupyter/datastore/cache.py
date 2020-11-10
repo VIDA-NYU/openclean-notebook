@@ -15,7 +15,7 @@ from typing import Dict, List, Optional, Union
 
 import pandas as pd
 
-from openclean_jupyter.datastore.base import Dataset, Datastore, SnapshotHandle
+from openclean_jupyter.datastore.base import Dataset, Datastore, Datasource, SnapshotHandle
 from openclean_jupyter.metadata.metastore.base import MetadataStore
 from openclean_jupyter.metadata.profiling.base import Profiler
 
@@ -183,7 +183,7 @@ class CachedDatastore(Datastore):
         return self.datastore.last_version(name=name)
 
     def load(
-        self, df: pd.DataFrame, name: str,
+        self, source: Datasource, name: str,
         primary_key: Optional[Union[List[str], str]] = None,
         profiler: Optional[Profiler] = None
     ) -> Dataset:
@@ -195,8 +195,9 @@ class CachedDatastore(Datastore):
 
         Parameters
         ----------
-        df: pd.DataFrame
-            Data frame containing the first versio of the archived dataset.
+        source: pd.DataFrame or string
+            Data frame or file containing the first version of the archived
+            dataset.
         name: string
             Unique dataset name.
         primary_key: string or list, default=None
@@ -216,7 +217,7 @@ class CachedDatastore(Datastore):
         ValueError
         """
         ds = self.datastore.load(
-            df=df,
+            source=source,
             name=name,
             primary_key=primary_key,
             profiler=profiler

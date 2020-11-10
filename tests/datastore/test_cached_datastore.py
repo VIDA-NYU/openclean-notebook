@@ -15,7 +15,7 @@ from openclean_jupyter.datastore.cache import CachedDatastore
 def test_cache_metadata(dataset, store):
     """Test accessing metadata for a dataset in a cached datastore."""
     cached_store = CachedDatastore(datastore=store)
-    ds = cached_store.load(df=dataset, name='my_dataset')
+    ds = cached_store.load(source=dataset, name='my_dataset')
     cached_store.metadata(name='my_dataset')\
         .set_annotation(column_id=1, key='type', value='int')
     annos = cached_store.metadata(name='my_dataset', version=ds.version)
@@ -26,7 +26,7 @@ def test_singular_cache(dataset, store):
     """Tast caching datasets with a cache size of one (default)."""
     cached_store = CachedDatastore(datastore=store)
     # -- First dataset --------------------------------------------------------
-    ds = cached_store.load(df=dataset, name='my_dataset')
+    ds = cached_store.load(source=dataset, name='my_dataset')
     assert ds.df.shape == (2, 3)
     assert ds.version == 0
     assert len(cached_store._cache) == 1
@@ -42,7 +42,7 @@ def test_singular_cache(dataset, store):
     assert 'my_dataset' in cached_store._cache
     assert len(cached_store.snapshots('my_dataset')) == 2
     # -- Add second dataset ---------------------------------------------------
-    ds = cached_store.load(df=df, name='next_dataset')
+    ds = cached_store.load(source=df, name='next_dataset')
     assert ds.df.shape == (1, 3)
     assert ds.version == 0
     assert len(cached_store._cache) == 1
@@ -63,8 +63,8 @@ def test_singular_cache(dataset, store):
 def test_multi_cache(dataset, store):
     """Test caching datasets in a cache of size two."""
     cached_store = CachedDatastore(datastore=store, cache_size=2)
-    cached_store.load(df=dataset, name='first_dataset')
-    cached_store.load(df=dataset, name='second_dataset')
+    cached_store.load(source=dataset, name='first_dataset')
+    cached_store.load(source=dataset, name='second_dataset')
     assert len(cached_store._cache) == 2
     assert 'first_dataset' in cached_store._cache
     assert 'second_dataset' in cached_store._cache
@@ -75,7 +75,7 @@ def test_multi_cache(dataset, store):
     assert 'second_dataset' in cached_store._cache
     assert cached_store._cache['first_dataset'].ds.version == 1
     time.sleep(0.1)
-    cached_store.load(df=dataset, name='third_dataset')
+    cached_store.load(source=dataset, name='third_dataset')
     assert len(cached_store._cache) == 2
     assert 'first_dataset' in cached_store._cache
     assert 'third_dataset' in cached_store._cache

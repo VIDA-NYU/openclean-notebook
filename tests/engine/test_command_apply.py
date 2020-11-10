@@ -35,7 +35,7 @@ def engine(tmpdir):
 
 def test_dataset_update(engine, dataset):
     """Test updates to a given dataset and retrieving all dataset versions."""
-    engine.load_dataset(df=dataset, name='my_dataset', primary_key='A')
+    engine.load_dataset(source=dataset, name='my_dataset', primary_key='A')
     engine.apply('my_dataset').update('B', 1)
     engine.apply('my_dataset').update('C', 2)
     # Get version history.
