@@ -13,7 +13,7 @@ from dataclasses import dataclass
 from histore.archive.manager.base import ArchiveManager
 from histore.archive.manager.persist import PersistentArchiveManager
 from histore.archive.manager.mem import VolatileArchiveManager
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional, Tuple, Union
 
 import pandas as pd
 import os
@@ -39,6 +39,7 @@ class DatasetHandle:
     datastore: Datastore = None
     identifier: str = None
     manager: ArchiveManager = None
+    pk: Optional[Union[List[str], str]] = None
 
     def drop(self):
         """Delete all resources that are associated with the dataset history."""
@@ -203,7 +204,8 @@ class OpencleanEngine(object):
         self._datastores[name] = DatasetHandle(
             datastore=datastore,
             identifier=archive_id,
-            manager=self.manager
+            manager=self.manager,
+            pk=primary_key
         )
         # Checkout and return the data frame for the loaded datasets snapshot.
         return datastore.checkout()
@@ -225,9 +227,7 @@ class OpencleanEngine(object):
         ------
         ValueError
         """
-        if name not in self._datastores:
-            raise ValueError("unknown dataset '{}'".format(name))
-        return self._datastores[name].datastore
+        return self._handle(name).datastore
 
     def drop(self, name: str):
         """Delete the full history for the dataset with the given name. Raises
@@ -242,31 +242,92 @@ class OpencleanEngine(object):
         ------
         ValueError
         """
-        if name not in self._datastores:
-            raise ValueError("unknown dataset '{}'".format(name))
-        self._datastores[name].drop()
+        self._handle(name).drop()
         del self._datastores[name]
 
-    def edit(self, name: str):
+    def edit(
+        self, name: str, n: Optional[int] = None,
+        random_state: Optional[Tuple[int, List]] = None
+    ):
         """Display the spreadsheet view for a given dataset. The dataset is
         identified by its unique name. Raises a ValueError if no dataset with
         the given name exists.
+
+        Creates a new data frame that contains a random sample of the rows in
+        the last snapshot of the identified dataset. This sample is registered
+        as a separate dataset with the engine. If neither n nor frac are
+        specified a random sample of size 100 is generated.
+
+        Parameters
+        ----------
+        name: string
+            Unique dataset name.
+        n: int, default=None
+            Number of rows in the sample dataset.
+        random_state: int or list, default=None
+            Seed for random number generator.
+
+        Raises
+        ------
+        ValueError
+        """
+        # Create a sample of size 100 if neither n nor frac is given.
+        n = 100 if n is None else n
+        # Get the handle for the referenced dataset and checkout the latest
+        # dataset snapshot.
+        handle = self._handle(name)
+        df = self.checkout(name=name)
+        # Create a random sample from the dataset. This is only necessary if
+        # the dataset contains more rows than the sample size.
+        if n < df.shape[0]:
+            df = df.sample(n=n, random_state=random_state)
+        # Register the generated sample as a new dataset using a volatile
+        # archive manager. The name for the new dataset is a unique 16 character
+        # string.
+        sample_id = unique_identifier(16)
+        while sample_id in self._datastores:
+            sample_id = unique_identifier(16)
+        manager = VolatileArchiveManager()
+        descriptor = manager.create(name=sample_id, primary_key=handle.pk)
+        archive_id = descriptor.identifier()
+        archive = manager.get(archive_id)
+        archive.commit(doc=df)
+        datastore = HISTOREDatastore(
+            archive=archive,
+            metastore=VolatileMetadataStoreFactory()
+        )
+        # Do not include the manager in the handle for the created dataset. We
+        # also include the identifier of the original dataset as a reference
+        # for the source of a sampled dataset.
+        ds = DatasetHandle(
+            datastore=datastore,
+            identifier=handle.identifier,
+            pk=handle.pk
+        )
+        self._datastores[sample_id] = ds
+        # Embed the spreadsheet view into the notebook.
+        spreadsheet(name=sample_id, engine=self.identifier)
+
+    def _handle(self, name: str) -> Datastore:
+        """Get the handle for the dataset with the given name. Raises a
+        ValueError if the dataset name is unknonw.
 
         Parameters
         ----------
         name: string
             Unique dataset name.
 
+        Returns
+        -------
+        openclean_jupyter.datastore.base.Datastore
+
         Raises
         ------
         ValueError
         """
-        # Get the descriptor for the last snapshot in the dataset history. This
-        # will raise an error if the dataset is unknown. The list of snapshots
-        # cannot be empty so it is safe to access the last entry immediately.
-        self.history(name=name)
-        # Embed the spreadsheet view into the notebook.
-        spreadsheet(name=name, engine=self.identifier)
+        if name not in self._datastores:
+            raise ValueError("unknown dataset '{}'".format(name))
+        return self._datastores[name]
 
     def history(self, name: str) -> List[SnapshotHandle]:
         """Get list of snapshot handles for all versions of a given dataset.
@@ -384,9 +445,9 @@ def DB(basedir: Optional[str] = None, create: Optional[bool] = False) -> Opencle
     # Create a unique identifier to register the created engine in the
     # global registry dictionary. Use an 8-character key here. Make sure to
     # account for possible conflicts.
-    engine_id = str(uuid.uuid4()).replace('-', '')[:8]
+    engine_id = unique_identifier(8)
     while engine_id in registry:
-        engine_id = str(uuid.uuid4()).replace('-', '')[:8]
+        engine_id = unique_identifier(8)
     # Create the engine components and the engine instance itself.
     if basedir is not None:
         histore = PersistentArchiveManager(basedir=basedir, create=create)
@@ -402,3 +463,21 @@ def DB(basedir: Optional[str] = None, create: Optional[bool] = False) -> Opencle
     # Register the new engine instance before returning it.
     registry[engine_id] = engine
     return engine
+
+
+# -- Helper functions ---------------------------------------------------------
+
+def unique_identifier(length: int) -> str:
+    """Get an identifier string of given length. Uses UUID to generate a unique
+    string and return the requested number of characters from that string.
+
+    Parameters
+    ----------
+    length: int
+        Number of characters in the returned string.
+
+    Returns
+    -------
+    string
+    """
+    return str(uuid.uuid4()).replace('-', '')[:length]

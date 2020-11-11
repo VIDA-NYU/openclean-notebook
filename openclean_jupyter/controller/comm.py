@@ -9,6 +9,8 @@
 
 from typing import Callable
 
+import logging
+
 
 def register_handler(message: str, callback: Callable):
     """Register a given callable to handle incomming requests for the given
@@ -22,7 +24,11 @@ def register_handler(message: str, callback: Callable):
         Handler that is called on incomming messages. The message data will be
         passed to the handler as the only argument.
     """
-    register_jupyter_handler(message=message, callback=callback)
+    try:
+        register_jupyter_handler(message=message, callback=callback)
+    except NameError:
+        pass
+    logging.warning('Not in a notebook environment')
 
 
 def register_jupyter_handler(message: str, callback: Callable):
