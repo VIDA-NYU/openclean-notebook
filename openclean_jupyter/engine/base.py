@@ -190,6 +190,17 @@ class OpencleanEngine(object):
         ------
         ValueError
         """
+        descriptor = self.histore.create(name=name, primary_key=primary_key)
+        archive = self.histore.get(descriptor.identifier())
+        snapshot = archive.commit(doc=source)
+        if profiler is not None:
+            # Ensure that we have a data frame for profiling.
+            if isinstance(source, str):
+                source = archive.checkout()
+            doc = profiler.profile(source)
+            self.metadata(name=name, version=snapshot.version)\
+                .set_annotation('profiler', doc)
+        return self.checkout(name=name, version=snapshot.version)
         return self.datastore.load(source=source, name=name)
 
     def metadata(

@@ -42,17 +42,17 @@ def test_dataset_update(engine, dataset):
     snapshots = engine.history('my_dataset')
     assert len(snapshots) == 3
     # Version 1
-    df = engine.checkout('my_dataset', version=snapshots[0].version).df
+    df = engine.checkout('my_dataset', version=snapshots[0].version)
     assert list(df['A']) == [1, 3]
     assert list(df['B']) == [2, 4]
     assert list(df['C']) == [3, 5]
     # Version 2
-    df = engine.checkout('my_dataset', version=snapshots[1].version).df
+    df = engine.checkout('my_dataset', version=snapshots[1].version)
     assert list(df['A']) == [1, 3]
     assert list(df['B']) == [1, 1]
     assert list(df['C']) == [3, 5]
     # Version 3
-    df = engine.checkout('my_dataset', version=snapshots[2].version).df
+    df = engine.checkout('my_dataset', version=snapshots[2].version)
     assert list(df['A']) == [1, 3]
     assert list(df['B']) == [1, 1]
     assert list(df['C']) == [2, 2]

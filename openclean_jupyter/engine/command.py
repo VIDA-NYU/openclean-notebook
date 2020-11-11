@@ -58,9 +58,9 @@ class CommandRegistry(object):
                 the evaluates the function on each data frame row to create
                 an updated snapshot that is then committed to the datastore.
                 """
-                df = self.datastore.checkout(name=self.name).df
+                df = self.datastore.checkout(name=self.name)
                 df = update(df=df, columns=columns, func=func)
-                return self.datastore.commit(df=df, name=self.name).df
+                return self.datastore.commit(df=df, name=self.name)
             # Add the created update operator as a class method for the data
             # frame transformer collection.
             setattr(Transformers, name, update_op)
@@ -131,6 +131,6 @@ class Transformers(object):
         -------
         pd.DataFrame
         """
-        df = self.datastore.checkout(name=self.name).df
+        df = self.datastore.checkout(name=self.name)
         df = update(df=df, columns=columns, func=func)
-        return self.datastore.commit(df=df, name=self.name).df
+        return self.datastore.commit(df=df, name=self.name)

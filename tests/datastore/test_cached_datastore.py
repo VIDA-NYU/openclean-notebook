@@ -26,35 +26,29 @@ def test_singular_cache(dataset, store):
     """Tast caching datasets with a cache size of one (default)."""
     cached_store = CachedDatastore(datastore=store)
     # -- First dataset --------------------------------------------------------
-    ds = cached_store.load(source=dataset, name='my_dataset')
-    assert ds.df.shape == (2, 3)
-    assert ds.version == 0
+    df = cached_store.load(source=dataset, name='my_dataset')
+    assert df.shape == (2, 3)
     assert len(cached_store._cache) == 1
     assert 'my_dataset' in cached_store._cache
-    ds = cached_store.checkout('my_dataset')
-    assert ds.df.shape == (2, 3)
-    assert ds.version == 0
-    df = ds.df[ds.df['A'] == 1]
-    ds = cached_store.commit(df=df, name='my_dataset')
-    assert ds.df.shape == (1, 3)
-    assert ds.version == 1
+    df = cached_store.checkout('my_dataset')
+    assert df.shape == (2, 3)
+    df = df[df['A'] == 1]
+    df = cached_store.commit(df=df, name='my_dataset')
+    assert df.shape == (1, 3)
     assert len(cached_store._cache) == 1
     assert 'my_dataset' in cached_store._cache
     assert len(cached_store.snapshots('my_dataset')) == 2
     # -- Add second dataset ---------------------------------------------------
-    ds = cached_store.load(source=df, name='next_dataset')
-    assert ds.df.shape == (1, 3)
-    assert ds.version == 0
+    df = cached_store.load(source=df, name='next_dataset')
+    assert df.shape == (1, 3)
     assert len(cached_store._cache) == 1
     assert 'next_dataset' in cached_store._cache
-    ds = cached_store.checkout('next_dataset')
-    assert ds.df.shape == (1, 3)
-    assert ds.version == 0
+    df = cached_store.checkout('next_dataset')
+    assert df.shape == (1, 3)
     assert len(cached_store.snapshots('next_dataset')) == 1
     # -- Checkout first dataset -----------------------------------------------
-    ds = cached_store.checkout('my_dataset', version=0)
-    assert ds.df.shape == (2, 3)
-    assert ds.version == 0
+    df = cached_store.checkout('my_dataset', version=0)
+    assert df.shape == (2, 3)
     assert len(cached_store._cache) == 1
     assert 'my_dataset' in cached_store._cache
     assert not cached_store._cache['my_dataset'].is_last
