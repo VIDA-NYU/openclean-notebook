@@ -7,7 +7,7 @@
 
 """Unit tests for the file system metadata store."""
 
-from openclean_jupyter.metadata.metastore.fs import FileSystemMetadataStore
+from openclean_jupyter.metadata.metastore.fs import FileSystemMetadataStoreFactory
 
 import histore.util as util
 
@@ -15,7 +15,7 @@ import histore.util as util
 def test_delete_annotations(tmpdir):
     """Test deleting annotations for different types of resources."""
     # -- Setup ----------------------------------------------------------------
-    store = FileSystemMetadataStore(basedir=str(tmpdir))
+    store = FileSystemMetadataStoreFactory(basedir=str(tmpdir)).get_store(0)
     store.set_annotation(key='A', value=1)
     store.set_annotation(key='B', value=2, column_id=1)
     store.set_annotation(key='A', value=3, row_id=2)
@@ -49,7 +49,7 @@ def test_delete_annotations(tmpdir):
 def test_update_annotations(tmpdir):
     """Test creating and updating annotations."""
     # -- Setup ----------------------------------------------------------------
-    store = FileSystemMetadataStore(basedir=str(tmpdir))
+    store = FileSystemMetadataStoreFactory(basedir=str(tmpdir)).get_store(0)
     # -- Create and update dataset annotation ---------------------------------
     store.set_annotation(key='A', value=1)
     store.set_annotation(key='B', value=2)

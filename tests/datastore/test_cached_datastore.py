@@ -7,69 +7,39 @@
 
 """Unit tests for the cached data store."""
 
-import time
-
 from openclean_jupyter.datastore.cache import CachedDatastore
 
 
 def test_cache_metadata(dataset, store):
     """Test accessing metadata for a dataset in a cached datastore."""
     cached_store = CachedDatastore(datastore=store)
-    ds = cached_store.load(source=dataset, name='my_dataset')
-    cached_store.metadata(name='my_dataset')\
+    cached_store.commit(df=dataset)
+    cached_store.metadata()\
         .set_annotation(column_id=1, key='type', value='int')
-    annos = cached_store.metadata(name='my_dataset', version=ds.version)
+    annos = cached_store.metadata(version=0)
     assert annos.get_annotation(column_id=1, key='type') == 'int'
 
 
-def test_singular_cache(dataset, store):
-    """Tast caching datasets with a cache size of one (default)."""
+def test_cache_dataframe(dataset, store):
+    """Test maintaining the last dataset in the cache."""
     cached_store = CachedDatastore(datastore=store)
-    # -- First dataset --------------------------------------------------------
-    df = cached_store.load(source=dataset, name='my_dataset')
+    # -- First snapshot -------------------------------------------------------
+    df = cached_store.commit(df=dataset)
     assert df.shape == (2, 3)
-    assert len(cached_store._cache) == 1
-    assert 'my_dataset' in cached_store._cache
-    df = cached_store.checkout('my_dataset')
+    assert cached_store._cache is not None
+    assert cached_store._cache.df.shape == (2, 3)
+    assert cached_store._cache.version == 0
+    df = cached_store.checkout()
     assert df.shape == (2, 3)
     df = df[df['A'] == 1]
-    df = cached_store.commit(df=df, name='my_dataset')
+    # -- Second snapshot ------------------------------------------------------
+    df = cached_store.commit(df=df)
     assert df.shape == (1, 3)
-    assert len(cached_store._cache) == 1
-    assert 'my_dataset' in cached_store._cache
-    assert len(cached_store.snapshots('my_dataset')) == 2
-    # -- Add second dataset ---------------------------------------------------
-    df = cached_store.load(source=df, name='next_dataset')
-    assert df.shape == (1, 3)
-    assert len(cached_store._cache) == 1
-    assert 'next_dataset' in cached_store._cache
-    df = cached_store.checkout('next_dataset')
-    assert df.shape == (1, 3)
-    assert len(cached_store.snapshots('next_dataset')) == 1
-    # -- Checkout first dataset -----------------------------------------------
-    df = cached_store.checkout('my_dataset', version=0)
+    assert cached_store._cache.df.shape == (1, 3)
+    assert cached_store._cache.version == 1
+    assert len(cached_store.snapshots()) == 2
+    # -- Checkout first snapshot ----------------------------------------------
+    df = cached_store.checkout(version=0)
     assert df.shape == (2, 3)
-    assert len(cached_store._cache) == 1
-    assert 'my_dataset' in cached_store._cache
-    assert not cached_store._cache['my_dataset'].is_last
-
-
-def test_multi_cache(dataset, store):
-    """Test caching datasets in a cache of size two."""
-    cached_store = CachedDatastore(datastore=store, cache_size=2)
-    cached_store.load(source=dataset, name='first_dataset')
-    cached_store.load(source=dataset, name='second_dataset')
-    assert len(cached_store._cache) == 2
-    assert 'first_dataset' in cached_store._cache
-    assert 'second_dataset' in cached_store._cache
-    time.sleep(0.1)
-    cached_store.commit(df=dataset, name='first_dataset')
-    assert len(cached_store._cache) == 2
-    assert 'first_dataset' in cached_store._cache
-    assert 'second_dataset' in cached_store._cache
-    assert cached_store._cache['first_dataset'].ds.version == 1
-    time.sleep(0.1)
-    cached_store.load(source=dataset, name='third_dataset')
-    assert len(cached_store._cache) == 2
-    assert 'first_dataset' in cached_store._cache
-    assert 'third_dataset' in cached_store._cache
+    assert cached_store._cache.df.shape == (2, 3)
+    assert cached_store._cache.version == 0

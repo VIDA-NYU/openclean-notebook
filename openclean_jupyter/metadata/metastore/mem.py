@@ -11,7 +11,7 @@ information about dataset snapshots in main memory.
 
 from typing import Dict, Optional
 
-from openclean_jupyter.metadata.metastore.base import MetadataStore
+from openclean_jupyter.metadata.metastore.base import MetadataStore, MetadataStoreFactory
 
 
 class VolatileMetadataStore(MetadataStore):
@@ -68,6 +68,33 @@ class VolatileMetadataStore(MetadataStore):
         """
         self.metadata[KEY(column_id, row_id)] = doc
         return doc
+
+
+class VolatileMetadataStoreFactory(MetadataStoreFactory):
+    """Factory pattern for volatile metadata stores. Maintains the created
+    metadata stores for each version in memory.
+    """
+    def __init__(self):
+        """Initialize the dictionary that maintains the created metadata stores.
+        """
+        self.stores = dict()
+
+    def get_store(self, version: int) -> VolatileMetadataStore:
+        """Get the metadata store for the dataset snapshot with the given version
+        identifier.
+
+        Parameters
+        ----------
+        version: int
+            Unique version identifier
+
+        Returns
+        -------
+        openclean_jupyter.metadata.metastore.mem.VolatileMetadataStore
+        """
+        if version not in self.stores:
+            self.stores[version] = VolatileMetadataStore()
+        return self.stores[version]
 
 
 # -- Helper functions ---------------------------------------------------------

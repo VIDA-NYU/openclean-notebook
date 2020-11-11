@@ -68,11 +68,10 @@ class CachedDatastore(Datastore):
             version = self.datastore.last_version()
         # Serve dataset from cache if present.
         if self._cache is not None:
-            df, cached_version = self._cache
             # If the requested version matches the cached version return the
             # cached data frame.
-            if version == cached_version:
-                return df
+            if version == self._cache.version:
+                return self._cache.df
         # Dataset has not been caches. Checkout the dataset from the datastore
         # and update the cache.
         df = self.datastore.checkout(version=version)

@@ -23,7 +23,6 @@ def dataset():
 @pytest.fixture
 def store(tmpdir):
     """Create a new instance of the HISTORE data store."""
-    return HISTOREDatastore(
-        basedir=str(tmpdir),
-        histore=PersistentArchiveManager(basedir=str(tmpdir))
-    )
+    manager = PersistentArchiveManager(basedir=str(tmpdir))
+    archive = manager.get(manager.create('test').identifier())
+    return HISTOREDatastore(archive=archive)

@@ -14,46 +14,31 @@ from openclean.operator.transform.update import update
 
 def test_create_dataset(store, dataset):
     """Test creating a dataset from a given data frame."""
-    df_1 = store.load(source=dataset, name='my_dataset')
+    df_1 = store.commit(df=dataset)
     assert df_1.shape == (2, 3)
-    df_1 = store.checkout('my_dataset')
+    df_1 = store.checkout()
     assert df_1.shape == (2, 3)
-    # Error when loading (creating) new dataset with existing name.
-    with pytest.raises(ValueError):
-        store.load(source=dataset, name='my_dataset')
-    df_2 = store.load(source=dataset, name='my_second_dataset')
-    assert df_2.shape == (2, 3)
-    # Delete first dataset.
-    store.drop('my_dataset')
-    # Error when accessing the dataset ans when attempting to delete it again.
-    with pytest.raises(ValueError):
-        store.checkout('my_dataset')
-    with pytest.raises(ValueError):
-        store.drop('my_dataset')
-    # The second dataset is still accessible.
-    df_2 = store.checkout('my_second_dataset')
-    assert df_2.shape == (2, 3)
 
 
 def test_dataset_history(store, dataset):
     """Test updates to a given dataset and retrieving all dataset versions."""
-    df = store.load(source=dataset, name='my_dataset')
-    df = store.commit(df=update(df=df, columns='B', func=1), name='my_dataset')
-    df = store.commit(df=update(df=df, columns='C', func=2), name='my_dataset')
-    snapshots = store.snapshots('my_dataset')
+    df = store.commit(df=dataset)
+    df = store.commit(df=update(df=df, columns='B', func=1))
+    df = store.commit(df=update(df=df, columns='C', func=2))
+    snapshots = store.snapshots()
     assert len(snapshots) == 3
     # Version 1
-    df = store.checkout('my_dataset', version=snapshots[0].version)
+    df = store.checkout(version=snapshots[0].version)
     assert list(df['A']) == [1, 3]
     assert list(df['B']) == [2, 4]
     assert list(df['C']) == [3, 5]
     # Version 2
-    df = store.checkout('my_dataset', version=snapshots[1].version)
+    df = store.checkout(version=snapshots[1].version)
     assert list(df['A']) == [1, 3]
     assert list(df['B']) == [1, 1]
     assert list(df['C']) == [3, 5]
     # Version 3
-    df = store.checkout('my_dataset', version=snapshots[2].version)
+    df = store.checkout(version=snapshots[2].version)
     assert list(df['A']) == [1, 3]
     assert list(df['B']) == [1, 1]
     assert list(df['C']) == [2, 2]
@@ -65,27 +50,31 @@ def test_dataset_metadata(store, dataset):
     """
     # Create two snapshots for a dataset and annotate one column for each with
     # a different data type string.
-    df = store.load(source=dataset, name='my_dataset')
-    store.metadata(name='my_dataset')\
+    df = store.commit(df=dataset)
+    store.metadata()\
         .set_annotation(column_id=1, key='type', value='int')
     df = store\
-        .commit(df=update(df=df, columns='B', func=1), name='my_dataset')
-    store.metadata(name='my_dataset')\
+        .commit(df=update(df=df, columns='B', func=1))
+    store.metadata()\
         .set_annotation(column_id=1, key='type', value='str')
     # Assert that the different snapshots have different type annotations for
     # column 1.
-    snapshots = store.snapshots('my_dataset')
-    annos = store.metadata(name='my_dataset', version=snapshots[0].version)
+    snapshots = store.snapshots()
+    annos = store.metadata(version=snapshots[0].version)
     assert annos.get_annotation(column_id=1, key='type') == 'int'
-    annos = store.metadata(name='my_dataset')
+    annos = store.metadata()
     assert annos.get_annotation(column_id=1, key='type') == 'str'
 
 
 def test_last_dataset_version(store, dataset):
     """Test getting the version identifier for the last snapshot of a dataset."""
-    ds = store.load(source=dataset, name='my_dataset')
-    assert store.last_version('my_dataset') == ds.version
-    ds = store.checkout('my_dataset')
-    assert store.last_version('my_dataset') == ds.version
-    with pytest.raises(ValueError):
-        store.last_version('unknown_dataset')
+    store.commit(df=dataset)
+    assert store.last_version() == 0
+    store.checkout()
+    assert store.last_version() == 0
+    store.commit(df=dataset)
+    assert store.last_version() == 1
+    store.checkout()
+    assert store.last_version() == 1
+    store.checkout(version=0)
+    assert store.last_version() == 1

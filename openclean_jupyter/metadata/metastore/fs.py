@@ -18,9 +18,13 @@ from typing import Callable, Dict, Optional
 
 from histore.archive.store.fs.reader import default_decoder
 from histore.archive.store.fs.writer import DefaultEncoder
-from openclean_jupyter.metadata.metastore.base import MetadataStore
+from openclean_jupyter.metadata.metastore.base import MetadataStore, MetadataStoreFactory
 
 import histore.util as util
+
+
+"""Folder for snapshot metadata files."""
+ANNOTATION_FOLER = '.annotations'
 
 
 class FileSystemMetadataStore(MetadataStore):
@@ -106,6 +110,57 @@ class FileSystemMetadataStore(MetadataStore):
         filename = os.path.join(self.basedir, FILE(column_id, row_id))
         with open(filename, 'w') as f:
             return json.dump(doc, f, cls=self.encoder)
+
+
+class FileSystemMetadataStoreFactory(MetadataStoreFactory):
+    """Factory pattern for volatile metadata stores."""
+    def __init__(
+        self, basedir: str, encoder: Optional[json.JSONEncoder] = None,
+        decoder: Optional[Callable] = None
+    ):
+        """Initialize the base directory and the optional JSON encoder and
+        decoder.
+
+        Parameters
+        ----------
+        basedir: string
+            Path to the base directory for all annotation files. The directory
+            is created if it does not exist.
+        encoder: json.JSONEncoder, default=None
+            Encoder for JSON objects.
+        decoder: callable: default=None
+            Object hook when decoding JSON objects.
+        """
+        # Create base directory if it does not exist.
+        self.basedir = util.createdir(basedir)
+        # Use the default decoder if None is given.
+        self.decoder = decoder if decoder is not None else default_decoder
+        # Use the default JSONEncoder if no encoder is given
+        self.encoder = encoder if encoder is not None else DefaultEncoder
+
+    def get_store(self, version: int) -> FileSystemMetadataStore:
+        """Get the metadata store for the dataset snapshot with the given version
+        identifier.
+
+        Parameters
+        ----------
+        version: int
+            Unique version identifier
+
+        Returns
+        -------
+        openclean_jupyter.metadata.metastore.fs.FileSystemMetadataStore
+        """
+        metadir = os.path.join(
+            self.basedir,
+            ANNOTATION_FOLER,
+            str(version)
+        )
+        return FileSystemMetadataStore(
+            basedir=metadir,
+            encoder=self.encoder,
+            decoder=self.decoder
+        )
 
 
 # -- Helper functions ---------------------------------------------------------

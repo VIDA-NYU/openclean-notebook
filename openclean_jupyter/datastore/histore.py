@@ -12,35 +12,33 @@ storage of dataset metadata.
 
 from typing import Dict, List, Optional
 
-import os
 import pandas as pd
 
 from histore.archive.base import Archive
 
 from openclean_jupyter.datastore.base import Datastore, SnapshotHandle
-from openclean_jupyter.metadata.metastore.fs import FileSystemMetadataStore
-
-
-ANNOTATION_FOLER = '.annotations'
+from openclean_jupyter.metadata.metastore.base import MetadataStore, MetadataStoreFactory
+from openclean_jupyter.metadata.metastore.mem import VolatileMetadataStoreFactory
 
 
 class HISTOREDatastore(Datastore):
     """Data store implementation that is based on HISTORE. This class is a
     simple wrapper around a HISTORE archive.
     """
-    def __init__(self, basedir: str, archive: Archive):
+    def __init__(self, archive: Archive, metadata: Optional[MetadataStoreFactory] = None):
         """Initialize the base directory for archive metadata and the reference
         to the archive.
 
         Parameters
         ----------
-        basedir: string
-            Base directory for storing archive metadata.
         archive: histore.archive.base.Archive
             Archive for dataset snapshots.
+        metadata: openclean_jupyter.metadata.metastore.base.MetadataStoreFactory,
+                default=None
+            Factory for snapshot metadata stores.
         """
-        self.basedir = basedir
         self.archive = archive
+        self._metadata = metadata if metadata is not None else VolatileMetadataStoreFactory()
         # Maintain a reference to the snapshot for the last version
         self._last_snapshot = archive.snapshots().last_snapshot()
 
@@ -93,7 +91,7 @@ class HISTOREDatastore(Datastore):
         """
         return self._last_snapshot.version
 
-    def metadata(self, version: Optional[int] = None) -> FileSystemMetadataStore:
+    def metadata(self, version: Optional[int] = None) -> MetadataStore:
         """Get metadata that is associated with the referenced dataset version.
         If no version is specified the metadata collection for the latest
         version is returned.
@@ -115,12 +113,7 @@ class HISTOREDatastore(Datastore):
         """
         if version is None:
             version = self.last_version()
-        metadir = os.path.join(
-            self.basedir,
-            ANNOTATION_FOLER,
-            str(version)
-        )
-        return FileSystemMetadataStore(basedir=metadir)
+        return self._metadata.get_store(version=version)
 
     def snapshots(self) -> List[SnapshotHandle]:
         """Get list of handles for all versions of a given dataset.

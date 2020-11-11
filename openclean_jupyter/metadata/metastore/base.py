@@ -5,6 +5,8 @@
 # The History Store (histore) is released under the Revised BSD License. See
 # file LICENSE for full license details.
 
+"""Base classes for metadata stores and store factories."""
+
 from abc import ABCMeta, abstractmethod
 from typing import Any, Dict, Optional
 
@@ -154,7 +156,7 @@ class MetadataStore(metaclass=ABCMeta):
     def write(
         self, doc: Dict, column_id: Optional[int] = None,
         row_id: Optional[int] = None
-    ):   # pragma: no cover
+    ):  # pragma: no cover
         """Write the annotation dictionary for the specified object.
 
         Parameters
@@ -171,5 +173,27 @@ class MetadataStore(metaclass=ABCMeta):
         Returns
         -------
         dict
+        """
+        raise NotImplementedError()
+
+
+class MetadataStoreFactory(object):  # pragma: no cover
+    """Factory pattern for metadata stores. Metadata stores are created on a
+    per-version basis. That is, each dataset snapshot has its own idependent
+    metadata store.
+    """
+    @abstractmethod
+    def get_store(self, version: int) -> MetadataStore:
+        """Get the metadata store for the dataset snapshot with the given version
+        identifier.
+
+        Parameters
+        ----------
+        version: int
+            Unique version identifier
+
+        Returns
+        -------
+        openclean_jupyter.metadata.metastore.base.MetadataStore
         """
         raise NotImplementedError()
