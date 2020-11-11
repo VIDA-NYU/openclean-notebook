@@ -11,16 +11,20 @@ identified by a unique name. Dataset snapshots are maintained by a datastore.
 
 from dataclasses import dataclass
 from histore.archive.manager.base import ArchiveManager
+from histore.archive.manager.persist import PersistentArchiveManager
+from histore.archive.manager.mem import VolatileArchiveManager
 from typing import Dict, List, Optional, Union
 
 import pandas as pd
 import os
+import uuid
 
 from openclean_jupyter.controller.spreadsheet import spreadsheet
 from openclean_jupyter.datastore.base import Datastore, Datasource, SnapshotHandle
 from openclean_jupyter.datastore.cache import CachedDatastore
 from openclean_jupyter.datastore.histore import HISTOREDatastore
 from openclean_jupyter.engine.command import CommandRegistry
+from openclean_jupyter.engine.registry import registry
 from openclean_jupyter.metadata.metastore.base import MetadataStore
 from openclean_jupyter.metadata.metastore.fs import FileSystemMetadataStoreFactory
 from openclean_jupyter.metadata.metastore.mem import VolatileMetadataStoreFactory
@@ -352,3 +356,49 @@ class OpencleanEngine(object):
         ValueError
         """
         return self._datastore(name=name).metadata(version=version)
+
+
+# -- Engine factory -----------------------------------------------------------
+
+def DB(basedir: Optional[str] = None, create: Optional[bool] = False) -> OpencleanEngine:
+    """Create an instance of the openclean-goes-jupyter engine. This test
+    implementation uses HISTORE as the underlying datastore. All files will
+    be stored in the given base directory. If no base directory is given, a
+    volatile archive manager will be used instead of a persistent one.
+
+    If the create flag is True all existing files in the base directory (if
+    given) will be removed.
+
+    Parameters
+    ----------
+    basedir: string
+        Path to directory on disk where archives are maintained.
+    create: bool, default=False
+        Create a fresh instance of the archive manager if True. This will
+        delete all files in the base directory.
+
+    Returns
+    -------
+    openclean_jupyter.engine.base.OpencleanEngine
+    """
+    # Create a unique identifier to register the created engine in the
+    # global registry dictionary. Use an 8-character key here. Make sure to
+    # account for possible conflicts.
+    engine_id = str(uuid.uuid4()).replace('-', '')[:8]
+    while engine_id in registry:
+        engine_id = str(uuid.uuid4()).replace('-', '')[:8]
+    # Create the engine components and the engine instance itself.
+    if basedir is not None:
+        histore = PersistentArchiveManager(basedir=basedir, create=create)
+        metadir = os.path.join(basedir, '.metadata')
+    else:
+        histore = VolatileArchiveManager()
+        metadir = None
+    engine = OpencleanEngine(
+        identifier=engine_id,
+        manager=histore,
+        basedir=metadir
+    )
+    # Register the new engine instance before returning it.
+    registry[engine_id] = engine
+    return engine

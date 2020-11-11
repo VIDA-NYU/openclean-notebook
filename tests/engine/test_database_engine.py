@@ -9,6 +9,8 @@
 
 import pytest
 
+from openclean_jupyter.engine.base import DB
+
 
 @pytest.mark.parametrize('cached', [True, False])
 def test_create_and_delete_dataset(cached, persistent_engine, dataset):
@@ -40,17 +42,25 @@ def test_create_and_delete_dataset(cached, persistent_engine, dataset):
     assert df.shape == (2, 3)
 
 
-@pytest.mark.parametrize('cached', [True, False])
-def test_create_and_commit(cached, persistent_engine, dataset):
-    """Test creating and committing datasets via the engine."""
+@pytest.mark.parametrize('volatile', [True, False])
+def test_create_and_commit(volatile, dataset, tmpdir):
+    """Test create and commit datasets via the engine. The engine is created via
+    the global DB method.
+    """
+    # Create engine instance. Depending on the volatile flag a volatile or
+    # persistent engine is being created.
+    if volatile:
+        engine = DB()
+    else:
+        engine = DB(basedir=str(tmpdir))
     # Create and checkout a dataset snapshot.
-    df = persistent_engine.create(source=dataset, name='My Data')
+    df = engine.create(source=dataset, name='My Data')
     assert df.shape == (2, 3)
-    df = persistent_engine.commit(df=df[df['A'] == 1], name='My Data')
+    df = engine.commit(df=df[df['A'] == 1], name='My Data')
     assert df.shape == (1, 3)
-    df = persistent_engine.checkout(name='My Data')
+    df = engine.checkout(name='My Data')
     assert df.shape == (1, 3)
-    df = persistent_engine.checkout(name='My Data', version=0)
+    df = engine.checkout(name='My Data', version=0)
     assert df.shape == (2, 3)
 
 
