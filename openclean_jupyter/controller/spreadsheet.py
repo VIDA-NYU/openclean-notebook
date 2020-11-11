@@ -14,8 +14,7 @@ from openclean.data.types import Column
 from openclean_jupyter.controller.base import DatasetLocator
 from openclean_jupyter.controller.comm import register_handler
 from openclean_jupyter.controller.html import make_html
-import openclean_jupyter.metadata.profiling.datamart as datamart
-import random
+
 
 """Default number of rows returned by a fetch request."""
 DEFAULT_LIMIT = 10

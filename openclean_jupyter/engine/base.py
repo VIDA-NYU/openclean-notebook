@@ -98,7 +98,7 @@ class OpencleanEngine(object):
         -------
         openclean_jupyter.engine.command.CommandRegistry
         """
-        return self.register.transformers(datastore=self._datastore(name=name))
+        return self.register.transformers(datastore=self.datastore(name=name))
 
     def checkout(
         self, name: str, version: Optional[int] = None
@@ -124,7 +124,7 @@ class OpencleanEngine(object):
         ------
         ValueError
         """
-        return self._datastore(name=name).checkout(version=version)
+        return self.datastore(name=name).checkout(version=version)
 
     def commit(
         self, df: pd.DataFrame, name: str, action: Optional[Dict] = None
@@ -146,7 +146,7 @@ class OpencleanEngine(object):
         -------
         pd.DataFrame
         """
-        return self._datastore(name=name).commit(df=df)
+        return self.datastore(name=name).commit(df=df)
 
     def create(
         self, source: Datasource, name: str,
@@ -210,7 +210,7 @@ class OpencleanEngine(object):
         # Checkout and return the data frame for the loaded datasets snapshot.
         return datastore.checkout()
 
-    def _datastore(self, name: str) -> Datastore:
+    def datastore(self, name: str) -> Datastore:
         """Get the datastore for the dataset with the given name. Raises a
         ValueError if the dataset name is unknonw.
 
@@ -296,6 +296,8 @@ class OpencleanEngine(object):
             archive=archive,
             metastore=VolatileMetadataStoreFactory()
         )
+        # Use a cached datastore to speed-up access to the last datset version.
+        datastore = CachedDatastore(datastore=datastore)
         # Do not include the manager in the handle for the created dataset. We
         # also include the identifier of the original dataset as a reference
         # for the source of a sampled dataset.
@@ -348,7 +350,7 @@ class OpencleanEngine(object):
         ------
         ValueError
         """
-        return self._datastore(name=name).snapshots()
+        return self.datastore(name=name).snapshots()
 
     def load_dataset(
         self, source: Datasource, name: str,
@@ -416,7 +418,7 @@ class OpencleanEngine(object):
         ------
         ValueError
         """
-        return self._datastore(name=name).metadata(version=version)
+        return self.datastore(name=name).metadata(version=version)
 
 
 # -- Engine factory -----------------------------------------------------------

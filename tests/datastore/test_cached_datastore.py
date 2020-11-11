@@ -29,6 +29,7 @@ def test_cache_dataframe(dataset, store):
     assert cached_store._cache is not None
     assert cached_store._cache.df.shape == (2, 3)
     assert cached_store._cache.version == 0
+    assert cached_store.last_version() == 0
     df = cached_store.checkout()
     assert df.shape == (2, 3)
     df = df[df['A'] == 1]

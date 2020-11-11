@@ -9,15 +9,17 @@ from abc import ABCMeta, abstractmethod
 
 import pandas as pd
 
-from typing import Dict
+from typing import Dict, Optional
+
+from openclean.data.types import Columns
 
 
-class Profiler(metaclass=ABCMeta):
+class Profiler(metaclass=ABCMeta):  # pragma: no cover
     """Interface for data profiler that generate metadata for a given data
     frame.
     """
     @abstractmethod
-    def profile(self, df: pd.DataFrame) -> Dict:
+    def profile(self, df: pd.DataFrame, columns: Optional[Columns] = None) -> Dict:
         """Run profiler on a given data frame. The structure of the resulting
         dictionary is implementatin dependent.
 
@@ -26,10 +28,14 @@ class Profiler(metaclass=ABCMeta):
         Parameters
         ----------
         df: pd.DataFrame
-            INput data frame.
+            Input data frame.
+        columns: int, string, or list(int or string), default=None
+            Single column or list of column index positions or column names for
+            those columns that are being profiled. Profile the full dataset if
+            None.
 
         Returns
         -------
         dict
         """
-        raise NotImplementedError()  # pragma: no cover
+        raise NotImplementedError()

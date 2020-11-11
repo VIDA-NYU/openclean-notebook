@@ -6,10 +6,11 @@
 # full license details.
 
 from __future__ import annotations
-from typing import Callable, List, Union
+from typing import Callable, List
 
 import pandas as pd
 
+from openclean.data.types import Columns
 from openclean.operator.transform.update import update
 from openclean_jupyter.datastore.base import Datastore
 
@@ -52,7 +53,7 @@ class CommandRegistry(object):
             This function will be added to the class definition of the data
             frame transformer collection.
             """
-            def update_op(self, columns):
+            def update_op(self, columns: Columns):
                 """Use the update method of the associated transformer to apply
                 the registered function on the latest dataset snapshot. Returns
                 the modified data frame.
@@ -106,9 +107,7 @@ class Transformers(object):
         """
         self.datastore = datastore
 
-    def update(
-        self, columns: Union[int, str, List[Union[int, str]]], func: Callable
-    ) -> pd.DataFrame:
+    def update(self, columns: Columns, func: Callable) -> pd.DataFrame:
         """Update a given column (or list of columns) by applying the given
         function.
 
