@@ -9,11 +9,10 @@ from abc import ABCMeta, abstractmethod
 from typing import Any, Dict, Optional
 
 
-class MetadataStore(metaclass=ABCMeta):  # pragma: no cover
-    """Interface for metadata stores that maintain annotations for individual
+class MetadataStore(metaclass=ABCMeta):
+    """Abstract class for metadata stores that maintain annotations for individual
     snapshots (datasets) in an archive.
     """
-    @abstractmethod
     def delete_annotation(
         self, key: str, column_id: Optional[int] = None,
         row_id: Optional[int] = None
@@ -32,9 +31,11 @@ class MetadataStore(metaclass=ABCMeta):  # pragma: no cover
             Row identifier for the referenced object (None for columns or full
             datasets).
         """
-        raise NotImplementedError()
+        doc = self.read(column_id=column_id, row_id=row_id)
+        if key in doc:
+            del doc[key]
+        self.write(doc=doc, column_id=column_id, row_id=row_id)
 
-    @abstractmethod
     def get_annotation(
         self, key: str, column_id: Optional[int] = None,
         row_id: Optional[int] = None, default_value: Optional[Any] = None
@@ -61,9 +62,9 @@ class MetadataStore(metaclass=ABCMeta):  # pragma: no cover
         -------
         Any
         """
-        raise NotImplementedError()
+        doc = self.read(column_id=column_id, row_id=row_id)
+        return doc.get(key, default_value)
 
-    @abstractmethod
     def has_annotation(
         self, key: str, column_id: Optional[int] = None,
         row_id: Optional[int] = None
@@ -86,9 +87,8 @@ class MetadataStore(metaclass=ABCMeta):  # pragma: no cover
         -------
         bool
         """
-        raise NotImplementedError()
+        return key in self.read(column_id=column_id, row_id=row_id)
 
-    @abstractmethod
     def list_annotations(
         self, column_id: Optional[int] = None, row_id: Optional[int] = None
     ) -> Dict:
@@ -104,9 +104,29 @@ class MetadataStore(metaclass=ABCMeta):  # pragma: no cover
             Row identifier for the referenced object (None for columns or full
             datasets).
         """
-        raise NotImplementedError()
+        return self.read(column_id=column_id, row_id=row_id)
 
     @abstractmethod
+    def read(
+        self, column_id: Optional[int] = None, row_id: Optional[int] = None
+    ) -> Dict:  # pragma: no cover
+        """Read the annotation dictionary for the specified object.
+
+        Parameters
+        ----------
+        column_id: int, default=None
+            Column identifier for the referenced object (None for rows or full
+            datasets).
+        row_id: int, default=None
+            Row identifier for the referenced object (None for columns or full
+            datasets).
+
+        Returns
+        -------
+        dict
+        """
+        raise NotImplementedError()
+
     def set_annotation(
         self, key: str, value: Any, column_id: Optional[int] = None,
         row_id: Optional[int] = None
@@ -125,5 +145,31 @@ class MetadataStore(metaclass=ABCMeta):  # pragma: no cover
         row_id: int, default=None
             Row identifier for the referenced object (None for columns or full
             datasets).
+        """
+        doc = self.read(column_id=column_id, row_id=row_id)
+        doc[key] = value
+        self.write(doc=doc, column_id=column_id, row_id=row_id)
+
+    @abstractmethod
+    def write(
+        self, doc: Dict, column_id: Optional[int] = None,
+        row_id: Optional[int] = None
+    ):   # pragma: no cover
+        """Write the annotation dictionary for the specified object.
+
+        Parameters
+        ----------
+        doc: dict
+            Annotation dictionary that is being written to file.
+        column_id: int, default=None
+            Column identifier for the referenced object (None for rows or full
+            datasets).
+        row_id: int, default=None
+            Row identifier for the referenced object (None for columns or full
+            datasets).
+
+        Returns
+        -------
+        dict
         """
         raise NotImplementedError()
