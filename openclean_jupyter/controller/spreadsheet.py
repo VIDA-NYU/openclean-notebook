@@ -11,9 +11,12 @@ from typing import Dict, Optional
 
 from openclean.data.types import Column
 
-from openclean_jupyter.controller.base import DatasetLocator
+from openclean_jupyter.controller.dataset import DatasetLocator
 from openclean_jupyter.controller.comm import register_handler
 from openclean_jupyter.controller.html import make_html
+from openclean_jupyter.metadata.profiling.datamart import DatamartProfiler
+
+import openclean_jupyter.controller.dataset as ds
 
 
 """Default number of rows returned by a fetch request."""
@@ -54,7 +57,7 @@ def spreadsheet_api(request: Dict) -> Dict:
     """
     # Get the dataset locator. This will raise an error if the locator is
     # invalid or not present.
-    dataset = DatasetLocator.deserialize(request.get('dataset'))
+    dataset = ds.deserialize(request.get('dataset'))
     # Ensure that the action element specifies a valid action.
     action = request.get('action', 'null')
     if action == 'load':
@@ -64,8 +67,9 @@ def spreadsheet_api(request: Dict) -> Dict:
     elif action == 'fetch':
         return fetch_rows(
             dataset=dataset,
-            limit=request.get('limit'),
-            offset=request.get('offset')
+            limit=request.get('limit', DEFAULT_LIMIT),
+            offset=request.get('offset', 0),
+            include_metadata=False
         )
     elif action == 'exec':
         dataset = dataset.exec(
@@ -78,7 +82,7 @@ def spreadsheet_api(request: Dict) -> Dict:
 
 def fetch_rows(
     dataset: DatasetLocator, limit: Optional[int] = DEFAULT_LIMIT,
-    offset: Optional[int] = 0, ismetadata: Optional[bool] = True
+    offset: Optional[int] = 0, include_metadata: Optional[bool] = True
 ) -> Dict:
     """Fetch limited number of rows from a dataset. Returns a serialization of
     the columns in the dataset schema and the fetched rows. The result has the
@@ -104,8 +108,10 @@ def fetch_rows(
         Maximum number of rows that are being fetched.
     offset: int, default=0
         Index of the first row that is being fetched.
-    metadata: bool, default=True
-        Whether include the metadata or not .
+    include_metadata: bool, default=True
+        Flag to determine whether to include profiling metadata in the response
+        or not .
+
     Returns
     -------
     dict
@@ -120,42 +126,52 @@ def fetch_rows(
         else:
             columns.append({'id': -1, 'name': col})
 
-    # Get metadata using datamart-profiler
+    # Get metadata using datamart-profiler. TODO: add support for other data
+    # profiler.
     metadataJSON = {}
-    if ismetadata:
-        metadata = datamart.run(df)
-        metadataJSON = {
-            "id": str(random.randint(0, 10)),
-            "name": '',
-            "description": '',
-            "size": metadata["size"] if "size" in metadata else 0,
-            "nb_rows": metadata["nb_rows"],
-            "nb_profiled_rows": metadata["nb_profiled_rows"],
-            "materialize": {},
-            "date": "",
-            "sample": metadata["sample"] if "sample" in metadata else "",
-            "source": 'openclean-notebook',
-            "version": "0.1",
-            "columns": metadata["columns"],
-            "types": metadata["types"]
-        }
-
+    if include_metadata:
+        metadata = dataset.metadata()
+        if not metadata.has_annotation(key='profiling'):
+            # We only need to invoke the profiler if the profiling metadata
+            # does not already exists for the dataset snapshot.
+            profiles = DatamartProfiler().profile(df)
+            metadataJSON = {
+                'id': dataset.version(),
+                'name': '',
+                'description': '',
+                'size': profiles['size'] if 'size' in profiles else 0,
+                'nb_rows': profiles['nb_rows'],
+                'nb_profiled_rows': profiles['nb_profiled_rows'],
+                'materialize': {},
+                'date': '',
+                'sample': profiles['sample'] if 'sample' in profiles else '',
+                'source': 'openclean-notebook',
+                'version': '0.1',
+                'columns': profiles['columns'],
+                'types': profiles['types']
+            }
+            metadata.set_annotation(
+                key='profiling',
+                value=metadataJSON
+            )
+        else:
+            # use metadata from previous profiler run.
+            metadataJSON = metadata.get_annotation(key='profiling')
     # Serialize dataset rows.
     row_count = df.shape[0]
     end = min(offset + limit, row_count)
     rows = list()
-
     for rid, values in df[offset:end].iterrows():
         rows.append({'id': rid, 'values': list(values)})
     # For now we also add the command listing to the respose. That should
     # disapear in the future.
     return {
-        'dataset': dataset.serialize(),
+        'dataset': ds.serialize(dataset),
         'columns': columns,
         'rows': rows,
         'offset': offset,
         'rowCount': row_count,
-        'commands': dataset.engine.register.serialize(),
+        'commands': dataset.commands(),
         'metadata': metadataJSON
     }
 
@@ -181,6 +197,6 @@ def spreadsheet(name: str, engine: str):
     view = make_html(
             template='spreadsheet.html',
             library='build/opencleanVis.js',
-            data=DatasetLocator(dataset=name, engine=engine).serialize()
+            data=ds.serialize(DatasetLocator(name=name, engine=engine))
         )
     display(HTML(view))
