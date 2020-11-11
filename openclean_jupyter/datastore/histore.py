@@ -25,7 +25,7 @@ class HISTOREDatastore(Datastore):
     """Data store implementation that is based on HISTORE. This class is a
     simple wrapper around a HISTORE archive.
     """
-    def __init__(self, archive: Archive, metadata: Optional[MetadataStoreFactory] = None):
+    def __init__(self, archive: Archive, metastore: Optional[MetadataStoreFactory] = None):
         """Initialize the base directory for archive metadata and the reference
         to the archive.
 
@@ -33,12 +33,12 @@ class HISTOREDatastore(Datastore):
         ----------
         archive: histore.archive.base.Archive
             Archive for dataset snapshots.
-        metadata: openclean_jupyter.metadata.metastore.base.MetadataStoreFactory,
+        metastore: openclean_jupyter.metadata.metastore.base.MetadataStoreFactory,
                 default=None
             Factory for snapshot metadata stores.
         """
         self.archive = archive
-        self._metadata = metadata if metadata is not None else VolatileMetadataStoreFactory()
+        self.metastore = metastore if metastore is not None else VolatileMetadataStoreFactory()
         # Maintain a reference to the snapshot for the last version
         self._last_snapshot = archive.snapshots().last_snapshot()
 
@@ -113,7 +113,7 @@ class HISTOREDatastore(Datastore):
         """
         if version is None:
             version = self.last_version()
-        return self._metadata.get_store(version=version)
+        return self.metastore.get_store(version=version)
 
     def snapshots(self) -> List[SnapshotHandle]:
         """Get list of handles for all versions of a given dataset.

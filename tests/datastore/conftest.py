@@ -7,17 +7,10 @@
 
 """Fixtures for datastore unit tests."""
 
-import pandas as pd
 import pytest
 
 from histore import PersistentArchiveManager
 from openclean_jupyter.datastore.histore import HISTOREDatastore
-
-
-@pytest.fixture
-def dataset():
-    """Returns a basic data frame with three columns and two rows."""
-    return pd.DataFrame(data=[[1, 2, 3], [3, 4, 5]], columns=['A', 'B', 'C'])
 
 
 @pytest.fixture

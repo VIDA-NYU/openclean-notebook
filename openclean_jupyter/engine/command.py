@@ -53,14 +53,11 @@ class CommandRegistry(object):
             frame transformer collection.
             """
             def update_op(self, columns):
-                """The update operator checks out the latest version of the
-                dataset that is associated with a transformer instance. It
-                the evaluates the function on each data frame row to create
-                an updated snapshot that is then committed to the datastore.
+                """Use the update method of the associated transformer to apply
+                the registered function on the latest dataset snapshot. Returns
+                the modified data frame.
                 """
-                df = self.datastore.checkout(name=self.name)
-                df = update(df=df, columns=columns, func=func)
-                return self.datastore.commit(df=df, name=self.name)
+                return self.update(columns=columns, func=func)
             # Add the created update operator as a class method for the data
             # frame transformer collection.
             setattr(Transformers, name, update_op)
@@ -80,38 +77,34 @@ class CommandRegistry(object):
         """
         return sorted(list(self._registry.keys()))
 
-    def transformers(self, datastore: Datastore, name: str) -> Transformers:
+    def transformers(self, datastore: Datastore) -> Transformers:
         """Get a object that allows to run registered data frame transformers
-        on the given data frame version.
+        on the given dataset. The dataset is represented by the datastore that
+        maintains the dataset history.
 
         Parameters
         ----------
         datastore: openclean_jupyter.datastore.base.Datastore
             Datastore that manages snapshots for the dataset.
-        name: string
-            Unique dataset name.
 
         Returns
         -------
         openclean_jupyter.engine.command.Transformers
         """
-        return Transformers(datastore=datastore, name=name)
+        return Transformers(datastore=datastore)
 
 
 class Transformers(object):
-    def __init__(self, datastore: Datastore, name: str):
-        """Initialize the reference to the dataset and the datastore that is
-        used to checkout and commit the updated dataset versions.
+    def __init__(self, datastore: Datastore):
+        """Initialize the reference to the datastore that maintains the history
+        of the dataset that is being tranformed.
 
         Parameters
         ----------
         datastore: openclean_jupyter.datastore.base.Datastore
             Datastore for managing dataset snapshots.
-        name: string
-            Unique name of the dataset that is being updated.
         """
         self.datastore = datastore
-        self.name = name
 
     def update(
         self, columns: Union[int, str, List[Union[int, str]]], func: Callable
@@ -131,6 +124,6 @@ class Transformers(object):
         -------
         pd.DataFrame
         """
-        df = self.datastore.checkout(name=self.name)
+        df = self.datastore.checkout()
         df = update(df=df, columns=columns, func=func)
-        return self.datastore.commit(df=df, name=self.name)
+        return self.datastore.commit(df=df)

@@ -23,14 +23,10 @@ from openclean_jupyter.metadata.metastore.base import MetadataStore, MetadataSto
 import histore.util as util
 
 
-"""Folder for snapshot metadata files."""
-ANNOTATION_FOLER = '.annotations'
-
-
 class FileSystemMetadataStore(MetadataStore):
     """Metadata store that maintains annotations for a dataset snapshot in JSON
     files with a given base directory. The files that maintain annotations
-    are named using the resource identifier. The following are the file names
+    are named using the rFileSystemMetadataStoreFactoryesource identifier. The following are the file names
     of metadata files for different types of resources:
 
     - ds.json: Dataset annotations
@@ -151,11 +147,7 @@ class FileSystemMetadataStoreFactory(MetadataStoreFactory):
         -------
         openclean_jupyter.metadata.metastore.fs.FileSystemMetadataStore
         """
-        metadir = os.path.join(
-            self.basedir,
-            ANNOTATION_FOLER,
-            str(version)
-        )
+        metadir = os.path.join(self.basedir, str(version))
         return FileSystemMetadataStore(
             basedir=metadir,
             encoder=self.encoder,

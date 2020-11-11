@@ -18,7 +18,7 @@ from openclean_jupyter.engine.registry import registry
 
 
 def DB(
-    basedir: Optional[str], create: Optional[bool] = False,
+    basedir: Optional[str] = None, create: Optional[bool] = False,
     cache_size: Optional[int] = 1
 ) -> OpencleanEngine:
     """Create an instance of the openclean-goes-jupyter engine. This test
@@ -34,7 +34,7 @@ def DB(
     Parameters
     ----------
     basedir: string
-        Path to dorectory on disk where archives are maintained.
+        Path to directory on disk where archives are maintained.
     create: bool, default=False
         Create a fresh instance of the archive manager if True. This will
         delete all files in the base directory.
