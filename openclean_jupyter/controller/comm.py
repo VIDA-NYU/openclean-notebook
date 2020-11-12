@@ -27,8 +27,7 @@ def register_handler(message: str, callback: Callable):
     try:
         register_jupyter_handler(message=message, callback=callback)
     except NameError:
-        pass
-    logging.warning('Not in a notebook environment')
+        logging.warning('Not in a notebook environment')
 
 
 def register_jupyter_handler(message: str, callback: Callable):

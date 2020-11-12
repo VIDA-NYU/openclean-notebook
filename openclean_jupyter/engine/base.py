@@ -60,7 +60,8 @@ class OpencleanEngine(object):
     engines if necessary.
     """
     def __init__(
-        self, identifier: str, manager: ArchiveManager, basedir: Optional[str] = None
+        self, identifier: str, manager: ArchiveManager,
+        basedir: Optional[str] = None, cached: Optional[bool] = True
     ):
         """Initialize the engine identifier and the manager for created dataset
         archives.
@@ -73,6 +74,9 @@ class OpencleanEngine(object):
             Manager for created dataset archives.
         basedir: string, default=None
             Path to directory on disk where archive metadata is maintained.
+        cached: bool, default=True
+            Flag indicating whether the all datastores that are created for
+            existing archives are cached datastores or not.
         """
         self.identifier = identifier
         self.manager = manager
@@ -84,6 +88,25 @@ class OpencleanEngine(object):
         # The identifier and manager are only set for persistent datasets to
         # allow dropping them.
         self._datastores = dict()
+        # Initialize all archives that are maintained by the manager.
+        for descriptor in self.manager.list():
+            archive_id = descriptor.identifier()
+            archive = self.manager.get(archive_id)
+            if self.basedir is not None:
+                metadir = os.path.join(self.basedir, archive_id)
+                metastore = FileSystemMetadataStoreFactory(basedir=metadir)
+            else:
+                metastore = VolatileMetadataStoreFactory()
+            datastore = HISTOREDatastore(archive=archive, metastore=metastore)
+            if cached:
+                # Wrapped datastore into a cached store if requested.
+                datastore = CachedDatastore(datastore=datastore)
+            self._datastores[descriptor.name()] = DatasetHandle(
+                datastore=datastore,
+                identifier=archive_id,
+                manager=self.manager,
+                pk=descriptor.primary_key()
+            )
 
     def apply(self, name: str) -> CommandRegistry:
         """Get object that allows to run registered (column) commands on the
@@ -423,7 +446,10 @@ class OpencleanEngine(object):
 
 # -- Engine factory -----------------------------------------------------------
 
-def DB(basedir: Optional[str] = None, create: Optional[bool] = False) -> OpencleanEngine:
+def DB(
+    basedir: Optional[str] = None, create: Optional[bool] = False,
+    cached: Optional[bool] = True
+) -> OpencleanEngine:
     """Create an instance of the openclean-goes-jupyter engine. This test
     implementation uses HISTORE as the underlying datastore. All files will
     be stored in the given base directory. If no base directory is given, a
@@ -439,6 +465,9 @@ def DB(basedir: Optional[str] = None, create: Optional[bool] = False) -> Opencle
     create: bool, default=False
         Create a fresh instance of the archive manager if True. This will
         delete all files in the base directory.
+    cached: bool, default=True
+        Flag indicating whether the all datastores that are created for
+        existing archives are cached datastores or not.
 
     Returns
     -------
@@ -460,7 +489,8 @@ def DB(basedir: Optional[str] = None, create: Optional[bool] = False) -> Opencle
     engine = OpencleanEngine(
         identifier=engine_id,
         manager=histore,
-        basedir=metadir
+        basedir=metadir,
+        cached=cached
     )
     # Register the new engine instance before returning it.
     registry[engine_id] = engine
