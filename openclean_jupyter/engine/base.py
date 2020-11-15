@@ -17,8 +17,8 @@ from typing import Dict, List, Optional, Tuple, Union
 
 import pandas as pd
 import os
-import uuid
 
+from openclean.util.core import unique_identifier
 from openclean_jupyter.controller.spreadsheet import spreadsheet
 from openclean_jupyter.datastore.base import Datastore, Datasource, SnapshotHandle
 from openclean_jupyter.datastore.cache import CachedDatastore
@@ -495,21 +495,3 @@ def DB(
     # Register the new engine instance before returning it.
     registry[engine_id] = engine
     return engine
-
-
-# -- Helper functions ---------------------------------------------------------
-
-def unique_identifier(length: int) -> str:
-    """Get an identifier string of given length. Uses UUID to generate a unique
-    string and return the requested number of characters from that string.
-
-    Parameters
-    ----------
-    length: int
-        Number of characters in the returned string.
-
-    Returns
-    -------
-    string
-    """
-    return str(uuid.uuid4()).replace('-', '')[:length]
