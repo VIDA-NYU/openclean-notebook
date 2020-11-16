@@ -9,13 +9,25 @@
 
 import pytest
 
-from openclean_jupyter.engine.store.json import DefaultObjectRepository
-from openclean_jupyter.engine.store.mem import VolatileObjectStore
+from openclean_jupyter.engine.store.fs import FileSystemObjectStore
+from openclean_jupyter.engine.store.mem import VolatileObjectRepository
+from openclean_jupyter.engine.store.serialized import SerializedObjectRepository
 
 
-def test_find_objects():
+def fsrepo(basedir):
+    """Get default serialized object repository using a file system store."""
+    return SerializedObjectRepository(store=FileSystemObjectStore(basedir))
+
+
+def memrepo(basedir):
+    """Get volatile object repository."""
+    return VolatileObjectRepository()
+
+
+@pytest.mark.parametrize('repo', [fsrepo, memrepo])
+def test_find_objects(repo, tmpdir):
     """Test object queries."""
-    store = DefaultObjectRepository(store=VolatileObjectStore())
+    store = repo(tmpdir)
     store.insert_object({'A': 1}, name='o1', dtype='t1')
     store.insert_object({'B': 2}, name='o1', namespace='n1', dtype='t2')
     assert {obj.namespace: obj.name for obj in store.find_objects()} == {None: 'o1', 'n1': 'o1'}
@@ -24,9 +36,10 @@ def test_find_objects():
     assert {obj.namespace: obj.name for obj in store.find_objects(namespace='n1', dtype='t2')} == {'n1': 'o1'}
 
 
-def test_object_lifecycle():
+@pytest.mark.parametrize('repo', [fsrepo, memrepo])
+def test_object_lifecycle(repo, tmpdir):
     """Test the object life-cycle."""
-    store = DefaultObjectRepository(store=VolatileObjectStore())
+    store = repo(tmpdir)
     store.insert_object({'A': 1}, name='o1', dtype='t1')
     store.insert_object({'B': 2}, name='o1', namespace='n1', dtype='t2')
     assert store.get_object(name='o1') == {'A': 1}
@@ -39,9 +52,10 @@ def test_object_lifecycle():
         store.remove_object(name='o1', namespace='n1')
 
 
-def test_namespace_and_type_listings():
+@pytest.mark.parametrize('repo', [fsrepo, memrepo])
+def test_namespace_and_type_listings(repo, tmpdir):
     """Test listing the namespaces and data types for stored objects."""
-    store = DefaultObjectRepository(store=VolatileObjectStore())
+    store = repo(tmpdir)
     # Initially the list of namespaces and data types is empty.
     assert store.namespaces() == set()
     assert store.types() == set()

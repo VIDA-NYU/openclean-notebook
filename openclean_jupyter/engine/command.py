@@ -14,37 +14,8 @@ import pandas as pd
 
 from openclean.data.types import Columns
 from openclean.operator.transform.update import update
-from openclean_jupyter.engine.parameter import Parameter
+from openclean_jupyter.engine.library.parameter import Parameter
 from openclean_jupyter.datastore.base import Datastore
-
-
-@dataclass
-class FunctionSpec:
-    """
-    """
-    pass
-
-
-class Namespace(object):
-    """
-    """
-    pass
-
-
-class FunctionStore(metaclass=ABCMeta):
-    """
-    """
-    @abstractmethod
-    def add(self, func: FunctionSpec):
-        """
-        """
-        raise NotImplementedError()
-
-    @abstractmethod
-    def namespaces(self) -> List[Namespace]:
-        """
-        """
-        raise NotImplementedError()
 
 
 class CommandRegistry(object):
@@ -83,14 +54,15 @@ class CommandRegistry(object):
         columns: int, default=None
             Specifies the number of input columns that the registered function
             operates on. The function will receive exactly one argument for
-            each columns plust arguments for any additional parameters. The
+            each column plus arguments for any additional parameter. The
             column values will be the first arguments that are passed to the
             registered function.
         outputs: int, default=None
             Defines the number of scalar output values that the registered
             function returns. By default it is assumed that the function will
             return a single scalar value.
-        parameters: list of openclean_jupyter.engine.parameter.Parameter, default=None
+        parameters: list of openclean_jupyter.engine.parameter.Parameter,
+                default=None
             List of declarations for additional input parameters to the
             registered function.
         namespace: string, default=None

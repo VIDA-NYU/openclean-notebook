@@ -13,15 +13,15 @@ from __future__ import annotations
 
 import os
 
-from openclean_jupyter.engine.store.json import ObjectStore
+from openclean_jupyter.engine.store.serialized import SerializedObjectStore
 
 
 """Metadata file name."""
 METADATA_FILE = '.registry'
 
 
-class FileSystemObjectStore(ObjectStore):
-    """Object store that maintains all (key, value)-pairs as files on disk.
+class FileSystemObjectStore(SerializedObjectStore):
+    """Object store that maintains all key-value pairs as files on disk.
     The object key is used as the file name.
     """
     def __init__(self, basedir: str):
@@ -103,7 +103,7 @@ class FileSystemObjectStore(ObjectStore):
                 return f.read()
 
     def write_object(self, key: str, value: str):
-        """Write (key, value)-pair to the store. If an entry with the given key
+        """Write key-value pair to the store. If an entry with the given key
         exists it is replaced by the given value.
         Parameters
         ----------

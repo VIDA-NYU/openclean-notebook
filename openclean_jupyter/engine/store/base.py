@@ -8,7 +8,7 @@
 """Generic store for serialized objects (dictionaries)."""
 
 from abc import ABCMeta, abstractmethod
-from typing import Dict, List, Optional, Set
+from typing import Any, List, Optional, Set
 
 
 class ObjectHandle(metaclass=ABCMeta):
@@ -32,13 +32,12 @@ class ObjectHandle(metaclass=ABCMeta):
         self.namespace = namespace
 
     @abstractmethod
-    def get_object(self) -> Dict:
-        """Get the dictionary serialization for the object from the object
-        store.
+    def get_object(self) -> Any:
+        """Get the deserialized object from the object store.
 
         Returns
         -------
-        dict
+        any
         """
         raise NotImplementedError()  # pragma: no cover
 
@@ -85,10 +84,10 @@ class ObjectRepository(metaclass=ABCMeta):  # pargma: no cover
         raise NotImplementedError()
 
     @abstractmethod
-    def get_object(self, name: str, namespace: Optional[str] = None) -> Dict:
-        """Get the seralization for the object that is identified by the given
-        name and namespace from the repository. Raises a KeyError if the
-        referenced object does not exist.
+    def get_object(self, name: str, namespace: Optional[str] = None) -> Any:
+        """Get the deseralized object that is identified by the given name and
+        namespace from the repository. Raises a KeyError if the referenced
+        object does not exist.
 
         Parameters
         ----------
@@ -99,7 +98,7 @@ class ObjectRepository(metaclass=ABCMeta):  # pargma: no cover
 
         Returns
         -------
-        dict
+        any
 
         Raises
         ------
@@ -109,16 +108,16 @@ class ObjectRepository(metaclass=ABCMeta):  # pargma: no cover
 
     @abstractmethod
     def insert_object(
-        self, doc: Dict, name: str, dtype: str, namespace: Optional[str] = None
+        self, object: Any, name: str, dtype: str, namespace: Optional[str] = None
     ):
-        """Store an object serialization under the given name and the optional
-        namespace. If an object with the same identifier exists it will be
-        replaced by the given object.
+        """Store an object under the given name and the optional namespace. If
+        an object with the same identifier exists it will be replaced by the
+        given object.
 
         Parameters
         ----------
-        doc: dict
-            Dictionary serialization for the object.
+        object: any
+            Object that is being inserted into the repository.
         name: string
             Unique object name.
         dtype: string
