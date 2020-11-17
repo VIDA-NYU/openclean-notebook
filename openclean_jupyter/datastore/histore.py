@@ -79,7 +79,7 @@ class HISTOREDatastore(Datastore):
         -------
         pd.DataFrame
         """
-        self._last_snapshot = self.archive.commit(doc=df)
+        self._last_snapshot = self.archive.commit(doc=df, action=action)
         return self.archive.checkout(version=self._last_snapshot.version)
 
     def last_version(self) -> int:

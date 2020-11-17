@@ -17,7 +17,7 @@ install_requires = [
     'future',
     'dill',
     'openclean-core==0.1.0',
-    'histore==0.2.1',
+    'histore==0.2.2',
     'datamart-profiler==0.8.1',
     'flowserv-core=0.6.0'
 ]

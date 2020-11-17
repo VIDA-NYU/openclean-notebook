@@ -9,7 +9,6 @@
 identified by a unique name. Dataset snapshots are maintained by a datastore.
 """
 
-from dataclasses import dataclass
 from histore.archive.manager.base import ArchiveManager
 from histore.archive.manager.persist import PersistentArchiveManager
 from histore.archive.manager.mem import VolatileArchiveManager
@@ -23,28 +22,13 @@ from openclean_jupyter.controller.spreadsheet import spreadsheet
 from openclean_jupyter.datastore.base import Datastore, Datasource, SnapshotHandle
 from openclean_jupyter.datastore.cache import CachedDatastore
 from openclean_jupyter.datastore.histore import HISTOREDatastore
-from openclean_jupyter.engine.command import CommandRegistry
+from openclean_jupyter.engine.data import DataEngine
+from openclean_jupyter.engine.library.command import CommandRegistry
 from openclean_jupyter.engine.registry import registry
+from openclean_jupyter.engine.store.base import ObjectRepository
 from openclean_jupyter.metadata.metastore.base import MetadataStore
 from openclean_jupyter.metadata.metastore.fs import FileSystemMetadataStoreFactory
 from openclean_jupyter.metadata.metastore.mem import VolatileMetadataStoreFactory
-
-
-@dataclass
-class DatasetHandle:
-    """Handle for datasets that are maintained by the engine. The archive identifier
-    and manager are only set for persisted datasets. This informaiton is required
-    to delete all resources that are associated with a dataset history.
-    """
-    datastore: Datastore = None
-    identifier: str = None
-    manager: ArchiveManager = None
-    pk: Optional[Union[List[str], str]] = None
-
-    def drop(self):
-        """Delete all resources that are associated with the dataset history."""
-        if self.identifier is not None and self.manager is not None:
-            self.manager.delete(self.identifier)
 
 
 class OpencleanEngine(object):
@@ -60,7 +44,7 @@ class OpencleanEngine(object):
     engines if necessary.
     """
     def __init__(
-        self, identifier: str, manager: ArchiveManager,
+        self, identifier: str, manager: ArchiveManager, objects: ObjectRepository,
         basedir: Optional[str] = None, cached: Optional[bool] = True
     ):
         """Initialize the engine identifier and the manager for created dataset
@@ -72,6 +56,8 @@ class OpencleanEngine(object):
             Unique identifier for the engine instance.
         manager: histore.archive.manager.base.ArchiveManager
             Manager for created dataset archives.
+        objects: openclean_jupyter.engine.store.base.ObjectRepository
+            Repository for objects (e.g., registered functions).
         basedir: string, default=None
             Path to directory on disk where archive metadata is maintained.
         cached: bool, default=True
@@ -82,12 +68,13 @@ class OpencleanEngine(object):
         self.manager = manager
         self.basedir = basedir
         # Registry of commands that can be applied to the maintained datasets.
-        self.register = CommandRegistry()
-        # Dictionary of datastores for the maintained datasets. Maintains objects
-        # that contain the datastore, archive identifier, and archive manager.
+        self.register = CommandRegistry(store=objects)
+        # Dictionary for the maintained datasets. Maintains data engines that
+        # contain the archive identifier and references to the datastore and
+        # the archive manager.
         # The identifier and manager are only set for persistent datasets to
         # allow dropping them.
-        self._datastores = dict()
+        self._datasets = dict()
         # Initialize all archives that are maintained by the manager.
         for descriptor in self.manager.list():
             archive_id = descriptor.identifier()
@@ -101,27 +88,13 @@ class OpencleanEngine(object):
             if cached:
                 # Wrapped datastore into a cached store if requested.
                 datastore = CachedDatastore(datastore=datastore)
-            self._datastores[descriptor.name()] = DatasetHandle(
+            self._datasets[descriptor.name()] = DataEngine(
                 datastore=datastore,
+                commands=self.register,
                 identifier=archive_id,
                 manager=self.manager,
                 pk=descriptor.primary_key()
             )
-
-    def apply(self, name: str) -> CommandRegistry:
-        """Get object that allows to run registered (column) commands on the
-        current version of a dataset that is identified by its unique name.
-
-        Parameters
-        ----------
-        name: string
-            Unique dataset name.
-
-        Returns
-        -------
-        openclean_jupyter.engine.command.CommandRegistry
-        """
-        return self.register.transformers(datastore=self.datastore(name=name))
 
     def checkout(
         self, name: str, version: Optional[int] = None
@@ -147,7 +120,7 @@ class OpencleanEngine(object):
         ------
         ValueError
         """
-        return self.datastore(name=name).checkout(version=version)
+        return self._datastore(name=name).checkout(version=version)
 
     def commit(
         self, df: pd.DataFrame, name: str, action: Optional[Dict] = None
@@ -169,7 +142,7 @@ class OpencleanEngine(object):
         -------
         pd.DataFrame
         """
-        return self.datastore(name=name).commit(df=df)
+        return self._datastore(name=name).commit(df=df, action=action)
 
     def create(
         self, source: Datasource, name: str,
@@ -205,7 +178,7 @@ class OpencleanEngine(object):
         ValueError
         """
         # Ensure that the dataset name is unique.
-        if name in self._datastores:
+        if name in self._datasets:
             raise ValueError("dataset '{}' exists".format(name))
         # Create a new dataset archive with the associated manager.
         descriptor = self.manager.create(name=name, primary_key=primary_key)
@@ -224,8 +197,9 @@ class OpencleanEngine(object):
         if cached:
             # Wrapped datastore into a cached store if requested.
             datastore = CachedDatastore(datastore=datastore)
-        self._datastores[name] = DatasetHandle(
+        self._datasets[name] = DataEngine(
             datastore=datastore,
+            commands=self.register,
             identifier=archive_id,
             manager=self.manager,
             pk=primary_key
@@ -233,7 +207,22 @@ class OpencleanEngine(object):
         # Checkout and return the data frame for the loaded datasets snapshot.
         return datastore.checkout()
 
-    def datastore(self, name: str) -> Datastore:
+    def dataset(self, name: str) -> DataEngine:
+        """Get object that allows to run registered (column) commands on the
+        current version of a dataset that is identified by its unique name.
+
+        Parameters
+        ----------
+        name: string
+            Unique dataset name.
+
+        Returns
+        -------
+        openclean_jupyter.engine.data.DataEngine
+        """
+        return self._handle(name)
+
+    def _datastore(self, name: str) -> Datastore:
         """Get the datastore for the dataset with the given name. Raises a
         ValueError if the dataset name is unknonw.
 
@@ -266,7 +255,7 @@ class OpencleanEngine(object):
         ValueError
         """
         self._handle(name).drop()
-        del self._datastores[name]
+        del self._datasets[name]
 
     def edit(
         self, name: str, n: Optional[int] = None,
@@ -308,7 +297,7 @@ class OpencleanEngine(object):
         # archive manager. The name for the new dataset is a unique 16 character
         # string.
         sample_id = unique_identifier(16)
-        while sample_id in self._datastores:
+        while sample_id in self._datasets:
             sample_id = unique_identifier(16)
         manager = VolatileArchiveManager()
         descriptor = manager.create(name=sample_id, primary_key=handle.pk)
@@ -324,16 +313,16 @@ class OpencleanEngine(object):
         # Do not include the manager in the handle for the created dataset. We
         # also include the identifier of the original dataset as a reference
         # for the source of a sampled dataset.
-        ds = DatasetHandle(
+        ds = DataEngine(
             datastore=datastore,
-            identifier=handle.identifier,
-            pk=handle.pk
+            pk=handle.pk,
+            original=handle
         )
-        self._datastores[sample_id] = ds
+        self._datasets[sample_id] = ds
         # Embed the spreadsheet view into the notebook.
         spreadsheet(name=sample_id, engine=self.identifier)
 
-    def _handle(self, name: str) -> Datastore:
+    def _handle(self, name: str) -> DataEngine:
         """Get the handle for the dataset with the given name. Raises a
         ValueError if the dataset name is unknonw.
 
@@ -344,15 +333,15 @@ class OpencleanEngine(object):
 
         Returns
         -------
-        openclean_jupyter.datastore.base.Datastore
+        openclean_jupyter.engine.data.DataEngine
 
         Raises
         ------
         ValueError
         """
-        if name not in self._datastores:
+        if name not in self._datasets:
             raise ValueError("unknown dataset '{}'".format(name))
-        return self._datastores[name]
+        return self._datasets[name]
 
     def history(self, name: str) -> List[SnapshotHandle]:
         """Get list of snapshot handles for all versions of a given dataset.
@@ -373,7 +362,7 @@ class OpencleanEngine(object):
         ------
         ValueError
         """
-        return self.datastore(name=name).snapshots()
+        return self._datastore(name=name).snapshots()
 
     def load_dataset(
         self, source: Datasource, name: str,
@@ -441,7 +430,7 @@ class OpencleanEngine(object):
         ------
         ValueError
         """
-        return self.datastore(name=name).metadata(version=version)
+        return self._datastore(name=name).metadata(version=version)
 
 
 # -- Engine factory -----------------------------------------------------------

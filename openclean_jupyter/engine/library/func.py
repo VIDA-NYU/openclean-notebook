@@ -104,16 +104,16 @@ class FunctionHandle:
             parameters=[ps.from_dict(obj) for obj in doc['parameters']]
         )
 
-    def to_dict(self) -> Dict:
-        """Create a dictionary serialization of the function handle. Uses the
-        dill package to serialize function objects.
+    def to_descriptor(self) -> Dict:
+        """Create a dictionary serialization of the function handle that does
+        not contain the serialization of the function object itself. Descriptors
+        are used for function listing in a user-interface, for example.
 
         Returns
         -------
         dict
         """
         return {
-            'func': dill.dumps(self.func).decode(encoding=DEFAULT_ENCODING),
             'name': self.name,
             'namespace': self.namespace,
             'label': self.label,
@@ -122,6 +122,18 @@ class FunctionHandle:
             'outputs': self.outputs,
             'parameters': [p.to_dict() for p in self.parameters]
         }
+
+    def to_dict(self) -> Dict:
+        """Create a dictionary serialization of the function handle. Uses the
+        dill package to serialize function objects.
+
+        Returns
+        -------
+        dict
+        """
+        doc = self.to_descriptor()
+        doc['func'] = dill.dumps(self.func).decode(encoding=DEFAULT_ENCODING)
+        return doc
 
 
 class FunctionSerializer(ObjectSerializer):
