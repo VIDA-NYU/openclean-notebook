@@ -8,7 +8,6 @@ interface TableSampleProps {
 interface TableSampleState {
   result: RequestResult;
 }
-
 class SpreadSheet extends React.PureComponent<
   TableSampleProps,
   TableSampleState
@@ -19,7 +18,11 @@ class SpreadSheet extends React.PureComponent<
     this.commPowersetAnalysis = new CommAPI(
       'spreadsheet',
       (msg: RequestResult) => {
-        this.setState({result: msg});
+        if (msg.metadata) {
+          this.setState({result: msg});
+        } else {
+          this.setState({result: {...this.state.result, rows: msg.rows}});
+        }
       }
     );
     this.commPowersetAnalysis.call({dataset: this.props.data, action: 'load'});
@@ -52,7 +55,7 @@ class SpreadSheet extends React.PureComponent<
       columns: columnsMetadata,
       date: '',
       materialize: {},
-      nb_profiled_rows: 0,
+      nb_profiled_rows: requestResult.metadata ? requestResult.metadata.nb_profiled_rows : 0,
       sample: '',
       source: 'histore',
       types: [],
@@ -67,18 +70,32 @@ class SpreadSheet extends React.PureComponent<
     return hit;
   }
 
-  onCommandClick(command: string, columnName: string) {
+  onCommandClick(command: string, columnName: string, limit: number) {
     this.commPowersetAnalysis.call({
       dataset: this.state.result.dataset,
       action: 'exec',
+      offset: this.state.result.offset,
+      limit: limit,
+      profiler: false,
       command,
       args: {column: columnName},
     });
   }
 
+  onPageClick(offset: number, limit: number) {
+    this.setState({result: {...this.state.result, offset: offset}});
+    this.commPowersetAnalysis.call({
+      dataset: this.props.data,
+      action: 'fetch',
+      profiler: false,
+      offset: offset,
+      limit: limit,
+    });
+  }
+
   render() {
     const hit = this.getMetadata(this.state.result);
-
+    const defaultLimit = 10;
     return (
       <div className="mt-2">
         <div className="d-flex flex-row">
@@ -86,8 +103,12 @@ class SpreadSheet extends React.PureComponent<
             hit={hit}
             requestResult={this.state.result}
             onCommandClick={(command, columnName) => {
-              this.onCommandClick(command, columnName);
+              this.onCommandClick(command, columnName, defaultLimit);
             }}
+            onPageClick={(offset) => {
+              this.onPageClick(offset, defaultLimit);
+            }}
+            pageSize={defaultLimit}
           />
         </div>
       </div>

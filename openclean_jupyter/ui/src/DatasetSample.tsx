@@ -4,6 +4,7 @@ import {SearchResult, ColumnMetadata, RequestResult} from './types';
 import './DatasetSample.css';
 import {VegaLite} from 'react-vega';
 import {TopLevelSpec as VlSpec} from 'vega-lite';
+import Pagination from './Pagination';
 
 const classMapping: {[key: string]: string} = {
   text: 'semtype-text',
@@ -333,6 +334,8 @@ interface TableProps {
   typeView: tableViews;
   requestResult: RequestResult;
   onCommandClick: (command: string, type: string) => void;
+  onPageClick: (offset: number) => void;
+  pageSize: number;
 }
 
 function Table(props: TableProps) {
@@ -341,9 +344,8 @@ function Table(props: TableProps) {
     columns,
     data,
   });
-  console.log('Columns');
-  console.log(columns);
   return (
+    <>
     <table {...getTableProps()} className="table table-hover small">
       {typeView === tableViews.COLUMN ? (
         // Column View
@@ -359,6 +361,20 @@ function Table(props: TableProps) {
         />
       )}
     </table>
+    {typeView !== tableViews.COLUMN &&
+      <div className="container" style={{marginTop: '-20px'}}>
+      <div className="text-center">
+        {hit.metadata.nb_rows && (
+          <Pagination
+            totalRows={hit.metadata.nb_rows}
+            onChangePage={(offset) => props.onPageClick(offset)}
+            pageSize={props.pageSize}
+          />
+        )}
+      </div>
+    </div>
+    }
+    </>
   );
 }
 
@@ -366,6 +382,8 @@ interface TableSampleProps {
   hit: SearchResult;
   requestResult: RequestResult;
   onCommandClick: (command: string, type: string) => void;
+  onPageClick: (offset: number) => void;
+  pageSize: number;
 }
 interface TableSampleState {
   typeView: tableViews;
@@ -382,7 +400,7 @@ class DatasetSample extends React.PureComponent<
   updateTypeView(view: tableViews) {
     this.setState({typeView: view});
   }
-
+  
   render() {
     const {hit} = this.props;
     const sample = hit.sample;
@@ -393,7 +411,6 @@ class DatasetSample extends React.PureComponent<
       Header: h,
       accessor: (row: string[]) => row[i],
     }));
-
     return (
       <div className="mt-2">
         <h6>Dataset Sample:</h6>
@@ -442,6 +459,10 @@ class DatasetSample extends React.PureComponent<
               onCommandClick={(command, columnName) => {
                 this.props.onCommandClick(command, columnName);
               }}
+              onPageClick={(offset) => {
+                this.props.onPageClick(offset);
+              }}
+              pageSize={this.props.pageSize}
             />
           </div>
         </div>
