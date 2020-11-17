@@ -66,20 +66,26 @@ def spreadsheet_api(request: Dict) -> Dict:
         return fetch_rows(
             dataset=dataset,
             limit=request.get('limit'),
-            offset=request.get('offset')
+            offset=request.get('offset'),
+            profiler=request.get('profiler')
         )
     elif action == 'exec':
         dataset = dataset.exec(
             cmd=request.get('command'),
             args=request.get('args')
         )
-        return fetch_rows(dataset)
+        return fetch_rows(
+            dataset,
+            limit=request.get('limit'),
+            offset=request.get('offset'),
+            profiler=request.get('profiler')
+        )
     raise ValueError("unknown action '{}'".format(action))
 
 
 def fetch_rows(
     dataset: DatasetLocator, limit: Optional[int] = DEFAULT_LIMIT,
-    offset: Optional[int] = 0, ismetadata: Optional[bool] = True
+    offset: Optional[int] = 0, profiler: Optional[bool] = True
 ) -> Dict:
     """Fetch limited number of rows from a dataset. Returns a serialization of
     the columns in the dataset schema and the fetched rows. The result has the
@@ -111,6 +117,7 @@ def fetch_rows(
     -------
     dict
     """
+    data_info = {}
     # Load the latest snapshot of the referenced dataset.
     df = dataset.load()
     # Create serialization of the dataset schema.
@@ -121,26 +128,6 @@ def fetch_rows(
         else:
             columns.append({'id': -1, 'name': col})
 
-    # Get metadata using datamart-profiler
-    metadataJSON = {}
-    if ismetadata:
-        metadata = datamart.run(df)
-        metadataJSON = {
-        "id": str(random.randint(0, 10)),
-        "name": '',
-        "description": '',
-        "size": metadata["size"] if "size" in metadata else 0,
-        "nb_rows": metadata["nb_rows"],
-        "nb_profiled_rows": metadata["nb_profiled_rows"],
-        "materialize": {},
-        "date": "",
-        "sample": metadata["sample"] if "sample" in metadata else "",
-        "source": 'openclean-notebook',
-        "version": "0.1",
-        "columns": metadata["columns"],
-        "types": metadata["types"]
-    }
-
     # Serialize dataset rows.
     row_count = df.shape[0]
     end = min(offset + limit, row_count)
@@ -150,15 +137,36 @@ def fetch_rows(
         rows.append({'id': rid, 'values': list(values)})
     # For now we also add the command listing to the respose. That should
     # disapear in the future.
-    return {
+    data_info = {
         'dataset': dataset.serialize(),
         'columns': columns,
         'rows': rows,
         'offset': offset,
-        'rowCount': row_count,
+        'row_count': row_count,
         'commands': dataset.engine.register.serialize(),
-        'metadata': metadataJSON
     }
+
+    # Get metadata using datamart-profiler
+    metadataJSON = {}
+    if profiler:
+        metadata = datamart.run(df)
+        metadataJSON = {
+            "id": str(random.randint(0, 10)),
+            "name": '',
+            "description": '',
+            "size": metadata["size"] if "size" in metadata else 0,
+            "nb_rows": metadata["nb_rows"],
+            "nb_profiled_rows": metadata["nb_profiled_rows"],
+            "materialize": {},
+            "date": "",
+            "sample": metadata["sample"] if "sample" in metadata else "",
+            "source": 'openclean-notebook',
+            "version": "0.1",
+            "columns": metadata["columns"],
+            "types": metadata["types"]
+        }
+        data_info['metadata'] = metadataJSON
+    return data_info
 
 
 # -- Spreadsheet controller ---------------------------------------------------
