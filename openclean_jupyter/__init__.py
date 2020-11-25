@@ -5,4 +5,4 @@
 # openclean is released under the Revised BSD License. See file LICENSE for
 # full license details.
 
-from openclean_jupyter.engine.base import DB  # noqa: F401
+from openclean_jupyter.engine import DB  # noqa: F401

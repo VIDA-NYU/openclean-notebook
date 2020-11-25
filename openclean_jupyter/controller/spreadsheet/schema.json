@@ -1,0 +1,168 @@
+{
+    "definitions": {
+        "datasetRef": {
+            "type": "object",
+            "description": "Identifier for the dataset in the spreadsheet view.",
+            "properties": {
+                "database": {
+                    "type": "string",
+                    "description": "Identifier of the database engine that manages the dataset."
+                },
+                "name": {
+                    "type": "string",
+                    "description": "Unique dataset name."
+                }
+            },
+            "required": ["database", "name"]
+        },
+        "valueFunction": {
+            "description": "Value generator for update and insert operations.",
+            "oneOf": [
+                {
+                    "type": "object",
+                    "description": "Evaluation function",
+                    "properties": {
+                        "name": {
+                            "type": "string",
+                            "description": "Unique name for registered evaluation function"
+                        },
+                        "namespace": {
+                            "type": "string",
+                            "description": "Optional namespace identifier"
+                        },
+                        "required": ["name"]
+                    }
+                },
+                {
+                    "type": "array",
+                    "description": "List of constant values.",
+                    "items": {
+                        "oneOf": [
+                            {"type": "number"},
+                            {"type": "string"},
+                            {"type": "boolean"}
+                        ]
+                    }
+                }
+            ]
+        },
+        "request": {
+            "type": "object",
+            "description": "General structure for requests that are handled by the spreadsheet API",
+            "properties": {
+                "dataset": {"$ref": "#/definitions/datasetRef"},
+                "command": {
+                    "type": "object",
+                    "description": "Definition of executed command",
+                    "properties": {
+                        "action": {
+                            "oneOf": [
+                                {
+                                    "type": "object",
+                                    "description": "Update operation",
+                                    "properties": {
+                                        "columns": {
+                                            "type": "array",
+                                            "description": "Index positions for columns that are targets (and potentially sources) for the evaluation function",
+                                            "items": {"type": "string"}
+                                        },
+                                        "func": {"$ref": "#/definitions/valueFunction"}
+                                    },
+                                    "required": ["columns", "func"]
+                                },
+                                {
+                                    "type": "object",
+                                    "description": "Insert operation",
+                                    "properties": {
+                                        "names": {"type": "array", "description": "Names for inserted columns", "items": {"type": "string"}},
+                                        "pos": {"type": "integer", "description": "Optional position argument for insert operations"},
+                                        "values": {"$ref": "#/definitions/valueFunction"}
+                                    },
+                                    "required": ["names"]
+                                }
+                            ]
+                        },
+                        "args": {
+                            "type": "array",
+                            "description": "List of key-value pairs for additional function arguments",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "name": {"type": "string", "description": "Unique argument name"},
+                                    "value": {}
+                                }
+                            }
+                        },
+                        "sources": {
+                            "type": "array",
+                            "description": "List of index positions for alternative input columns",
+                            "items": {"type": "integer"}
+                        },
+                        "required": ["action"]
+                    }
+                },
+                "limit": {
+                    "type": "integer",
+                    "description": "Maximum number of rows in the response",
+                    "minimum": 1
+                },
+                "offset": {
+                    "type": "integer",
+                    "description": "Offset for first row in the response",
+                    "minimum": 0
+                },
+                "includeMetadata": {
+                    "type": "boolean",
+                    "description": "Include profiling metadata in the response if true"
+                }
+            },
+            "required": ["dataset"]
+        },
+        "response": {
+            "type": "object",
+            "description": "General structure for responses that are send by the spreadsheet API",
+            "properties": {
+                "dataset": {"$ref": "#/definitions/datasetRef"},
+                "columns": {
+                    "type": "array",
+                    "description": "List of columns names in the dataset schema",
+                    "items": {"type": "string"}
+                },
+                "rows": {
+                    "type": "array",
+                    "description": "List of dataset rows",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "id": {"type": "integer", "description": "Unique row identifier"},
+                            "values": {
+                                "type": "array",
+                                "description": "Row cell values",
+                                "items": {
+                                    "oneOf": [
+                                        {"type": "number"},
+                                        {"type": "string"}
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                },
+                "offset": {
+                    "type": "integer",
+                    "description": "Offset for first row in the response",
+                    "minimum": 0
+                },
+                "rowCount": {
+                    "type": "integer",
+                    "description": "Total number of rows in the dataset",
+                    "minimum": 0
+                },
+                "metadata": {
+                    "type": "object"
+                }
+            },
+            "required": ["dataset", "columns", "rows", "rowCount", "offset"]
+        }
+    }
+}

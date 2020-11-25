@@ -7,7 +7,7 @@
 
 """Unit tests for editing a dataset in the spreadsheet view."""
 
-from openclean_jupyter.engine.base import DB
+from openclean_jupyter.engine import DB
 
 
 def test_edit_dataset(dataset, tmpdir):
@@ -15,4 +15,3 @@ def test_edit_dataset(dataset, tmpdir):
     engine = DB(str(tmpdir))
     engine.create(source=dataset, name='DS', primary_key='A')
     engine.edit('DS')
-    assert len(engine._datastores) == 2

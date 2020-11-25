@@ -13,5 +13,8 @@ import pytest
 
 @pytest.fixture
 def dataset():
-    """Returns a basic data frame with three columns and two rows."""
-    return pd.DataFrame(data=[[1, 2, 3], [3, 4, 5]], columns=['A', 'B', 'C'])
+    """Returns a basic data frame with three columns and four rows."""
+    return pd.DataFrame(
+        data=[[1, 2, 3], [3, 4, 5], [5, 6, 7], [7, 8, 9]],
+        columns=['A', 'B', 'C']
+    )

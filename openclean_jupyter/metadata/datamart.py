@@ -13,7 +13,7 @@ import pandas as pd
 
 from openclean.data.types import Columns
 from openclean.operator.transform.select import select
-from openclean_jupyter.metadata.profiling.base import Profiler
+from openclean.profiling.dataset import Profiler
 
 
 class DatamartProfiler(Profiler):
