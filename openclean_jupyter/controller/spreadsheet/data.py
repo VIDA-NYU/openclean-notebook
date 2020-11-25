@@ -10,162 +10,133 @@ that are rendered in a notebook environment.
 """
 
 from __future__ import annotations
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Tuple
 
 import pandas as pd
 
-from openclean.data.metadata.base import MetadataStore
-from openclean.data.types import Scalar
-from openclean.engine.library.base import ObjectLibrary
-from openclean.engine.library.func import FunctionHandle
+from openclean.engine.data import DatasetHandle
 from openclean.engine.registry import registry
+from openclean_jupyter.engine import OpencleanAPI
+from openclean_jupyter.metadata.datamart import DatamartProfiler
 
 
-class Dataset(object):
-    """The dataset handle provides access to the current snapshot of the
-    dataset that is identified by a given dataset locator.
+# -- Dataset locator (de)serialization ----------------------------------------
+
+def deserialize(doc: Dict) -> Tuple[DatasetHandle, OpencleanAPI]:
+    """Extract the dataset name and engine identifier from the dataset
+    locator in a request body. Expects a dictionary with two elements:
+    'name' for the dataset name and 'engine' for the engine identifier.
+
+    The document may be None. Raises a ValueError if an invalid dictionary
+    is given.
+
+    Parameters
+    ----------
+    doc: dict
+        Dictionary containing dataset name and engine identifier.
+
+    Returns
+    -------
+    tuple of openclean.engine.data.DatasetHandle, openclean_jupyter.engine.OpencleanAPI
+
+    Raises
+    ------
+    ValueError
     """
-    def __init__(self, name: str, engine: str):
-        """Initialize the dataset locator and the reference to the datastore
-        that is responsible for maintaining the dataset.
+    if not doc or len(doc) > 2:
+        raise ValueError('invalid dataset locator')
+    if 'name' not in doc:
+        raise ValueError('missing name in dataset locator')
+    if 'database' not in doc:
+        raise ValueError('missing database identifier in dataset locator')
+    engine = registry.get(doc['database'])
+    return engine.dataset(doc['name']), engine
 
-        Parameters
-        ----------
-        name: string
-            Unique dataset name.
-        engine: string
-            Identifier of the database engine for the dataset.
-        """
-        self.name = name
-        self.engine = engine
-        # Maintain a reference to the dataset handle.
-        self._dataset = None
 
-    def checkout(self) -> pd.DataFrame:
-        """Load the latest version of the identified dataset.
+def serialize(name: str, engine: str) -> Dict:
+    """Get dictionary serialization for a dataset locator.
 
-        Returns
-        -------
-        pd.DataFrame
-        """
-        return self.dataset.checkout()
+    Parameters
+    ----------
+    name: string
+        Unique dataset name.
+    engine: string
+        Unique identifier of the database engine (API).
 
-    @property
-    def dataset(self):
-        """Get reference to the dataset handle.
+    Returns
+    -------
+    dict
+    """
+    return {'name': name, 'database': engine}
 
-        Returns
-        -------
-        """
-        if self._dataset is None:
-            self._dataset = registry.get(self.engine).dataset(self.name)
-        return self._dataset
 
-    @staticmethod
-    def deserialize(doc: Dict) -> Dataset:
-        """Extract the dataset name and engine identifier from the dataset
-        locator in a request body. Expects a dictionary with two elements:
-        'name' for the dataset name and 'engine' for the engine identifier.
+# -- Fetch serialized dataset objects -----------------------------------------
 
-        The document may be None. Raises a ValueError if an invalid dictionary
-        is given.
+def fetch_metadata(df: pd.DataFrame, dataset: DatasetHandle) -> Dict:
+    """Get metadata for the given dataset. Returns an object that contains
+    profiling results and a serialization of the operation log.
 
-        Parameters
-        ----------
-        doc: dict
-            Dictionary containing dataset name and engine identifier.
-
-        Returns
-        -------
-        openclean_jupyter.controller.spreadsheet.base.DatasetLocator
-
-        Raises
-        ------
-        ValueError
-        """
-        if not doc or len(doc) > 2:
-            raise ValueError('invalid dataset locator')
-        if 'name' not in doc:
-            raise ValueError('missing name in dataset locator')
-        if 'database' not in doc:
-            raise ValueError('missing database identifier in dataset locator')
-        return Dataset(name=doc['name'], engine=doc['database'])
-
-    def insert(
-        self, names: List[str], pos: Optional[int] = None,
-        values: Optional[Union[Scalar, FunctionHandle]] = None,
-        args: Optional[Dict] = None, sources: Optional[int] = None
-    ):
-        """Insert one or more columns at a given position into the dataset. One
-        column is inserted for each given column name. If the insert position is
-        undefined, columns are appended. If the position does not reference
-        a valid position (i.e., not between 0 and len(df.columns)) a ValueError
-        is raised.
-
-        Values for the inserted columns are generated using a given constant
-        value or function. If a function is given, it is expected to return
-        exactly one value (e.g., a tuple of len(names)) for each of the inserted
-        columns.
-
-        Parameters
-        ----------
-        names: string, or list(string)
-            Names of the inserted columns.
-        pos: int, default=None
-            Insert position for the new columns. If None, the columns will be
-            appended.
-        values: scalar or openclean.engine.library.func.FunctionHandle, default=None
-            Single value, tuple of values, or library function that is used to
-            generate the values for the inserted column(s). If no default is
-            specified all columns will contain None.
-        args: dict, default=None
-            Additional keyword arguments that are passed to the callable together
-            with the column values that are extracted from each row.
-        sources: int, string, or list(int or string), default=None
-            List of source columns from which the input values for the
-            callable are extracted.
-        """
-        self.dataset.insert(
-            names=names,
-            pos=pos,
-            values=values,
-            args=args,
-            sources=sources
+    Parameters
+    ----------
+    df: pd.DataFrame
+        Data frame for the dataset snapshot.
+    dataset: openclean.engine.data.DatasetHandle
+        Handle for the dataset that provides access to the metadata store and
+        the operation log.
+    """
+    metadata = dataset.metadata()
+    if not metadata.has_annotation(key='profiling'):
+        # We only need to invoke the profiler if the profiling metadata
+        # does not already exists for the dataset snapshot.
+        profiles = DatamartProfiler().profile(df)
+        metadataJSON = {
+            'id': dataset.version(),
+            'name': '',
+            'description': '',
+            'size': profiles['size'] if 'size' in profiles else 0,
+            'nb_rows': profiles['nb_rows'],
+            'nb_profiled_rows': profiles['nb_profiled_rows'],
+            'materialize': {},
+            'date': '',
+            'sample': profiles['sample'] if 'sample' in profiles else '',
+            'source': 'openclean-notebook',
+            'version': '0.1',
+            'columns': profiles['columns'],
+            'types': profiles['types']
+        }
+        metadata.set_annotation(
+            key='profiling',
+            value=metadataJSON
         )
+    else:
+        # Use metadata from previous profiler run.
+        metadataJSON = metadata.get_annotation(key='profiling')
+    # Add profiler results and serialization of the operation log to the
+    # returned metadata object.
+    return {
+        'profiling': metadataJSON,
+        'log': [{
+            'id': e.identifier,
+            'op': e.descriptor,
+            'isCommitted': e.is_committed
+        } for e in dataset.log()]
+    }
 
-    @property
-    def library(self) -> ObjectLibrary:
-        """Get reference to object registry for the associated engine.
 
-        Returns
-        -------
-        openclean.engine.library.base.ObjectLibrary
-        """
-        return registry.get(self.engine).library
+def fetch_rows(df: pd.DataFrame, offset: int, end: int) -> List[Dict]:
+    """Get serialization of data frame rows.
 
-    def serialize(self) -> Dict:
-        """Get dictionary serialization for a dataset locator.
-        Returns
-        -------
-        dict
-        """
-        return {'name': self.name, 'database': self.engine}
+    Parameters
+    ----------
+    df: pd.DataFrame
+        Data frame for dataset snapshot.
+    offset: int
+        Offset for first row in the returned result.
+    end: int
+        Index for first row that is not in the returned result.
 
-    def metadata(self) -> MetadataStore:
-        """Get metadata that is associated with the referenced dataset version.
-
-        Returns
-        -------
-        openclean_jupyter.metadata.metastore.base.MetadataStore
-
-        """
-        return self.dataset.datastore.metadata()
-
-    def version(self) -> int:
-        """Identifier of the current dataset version.
-
-        Returns
-        -------
-        int
-        """
-        return self.dataset.datastore.last_version()
+    Returns
+    -------
+    list of dict
+    """
+    return [{'id': id, 'values': list(vals)} for id, vals in df[offset:end].iterrows()]

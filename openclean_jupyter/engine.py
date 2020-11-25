@@ -26,8 +26,6 @@ from openclean.engine.store.mem import VolatileObjectRepository
 from openclean.engine.store.serialized import SerializedObjectRepository
 from openclean.util.core import unique_identifier
 
-from openclean_jupyter.controller.spreadsheet.base import spreadsheet
-
 
 @dataclass
 class Namespace:
@@ -41,6 +39,20 @@ class Namespace:
     help: Optional[str] = None
     sort_order: Optional[int] = 0
 
+    def to_dict(self) -> Dict:
+        """Get dictionary serialization for the namespace descriptor.
+
+        Returns
+        -------
+        dict
+        """
+        return {
+            'id': self.identifier,
+            'label': self.label,
+            'help': self.help,
+            'sortOrder': self.sort_order
+        }
+
 
 class OpencleanAPI(OpencleanEngine):
     """The openclean API extends the openclean engine with functionality to display
@@ -48,7 +60,7 @@ class OpencleanAPI(OpencleanEngine):
     """
     def __init__(
         self, identifier: str, manager: ArchiveManager, library: ObjectLibrary,
-        namespaces: Optional[List[Namespace]] = None, basedir: Optional[str] = None,
+        namespaces: Optional[List[Namespace]] = list(), basedir: Optional[str] = None,
         cached: Optional[bool] = True
     ):
         """Initialize the engine identifier, the manager for created dataset
@@ -62,7 +74,7 @@ class OpencleanAPI(OpencleanEngine):
             Manager for created dataset archives.
         library: openclean.engine.library.base.ObjectLibrary
             Library manager for objects (e.g., registered functions).
-        namespaces: list of openclean_jupyter.engine.Namespace, default=None
+        namespaces: list of openclean_jupyter.engine.Namespace, default=list
             List of namespace descriptors.
         basedir: string, default=None
             Path to directory on disk where archive metadata is maintained.
@@ -79,24 +91,8 @@ class OpencleanAPI(OpencleanEngine):
         )
         # Convert the given list of namespaces into a directory.
         self.namespaces = dict()
-        if namespaces is not None:
-            for ns in namespaces:
-                self.namespaces[ns.identifier] = ns
-
-    def commands(self) -> List[Dict]:
-        """Get serialization of registered objects.
-
-        'functions': []
-        'lookups': []
-
-        Returns
-        -------
-        list
-        """
-        functions = list()
-        for obj in self.functions():
-            functions.append(obj.get_object().to_descriptor())
-        return functions
+        for ns in namespaces:
+            self.namespaces[ns.identifier] = ns
 
     def edit(
         self, name: str, n: Optional[int] = None,
@@ -127,8 +123,25 @@ class OpencleanAPI(OpencleanEngine):
         # Create a sample for the dataset if a sample size was given by the user.
         if n is not None:
             self.sample(name=name, n=n, random_state=random_state)
-        # Embed the spreadsheet view into the notebook.
+        # Embed the spreadsheet view into the notebook. Import the spreadsheet
+        # embedder here to avoid cyclic dependencies.
+        from openclean_jupyter.controller.spreadsheet.base import spreadsheet
         spreadsheet(name=name, engine=self.identifier)
+
+    def library_dict(self) -> Dict:
+        """Get serialization of registered library functions and namespaces.
+
+        Returns
+        -------
+        list
+        """
+        functions = list()
+        for obj in self.library.functions():
+            functions.append(obj.get_object().to_descriptor())
+        return {
+            'functions': functions,
+            'namespaces': [n.to_dict() for n in self.namespaces.values()]
+        }
 
 
 # -- Engine factory -----------------------------------------------------------
@@ -181,6 +194,22 @@ def DB(
     library.eval(namespace='string')(str.lower)
     library.eval(namespace='string')(str.upper)
     library.eval(namespace='string')(str.capitalize)
+    # Add namespace for string functions if not present.
+    ns_string = Namespace(
+        identifier='string',
+        label='Text',
+        help='Collection of string operators'
+    )
+    if namespaces is not None:
+        found = False
+        for ns in namespaces:
+            if ns.identifier == ns_string.identifier:
+                found = True
+                break
+        if not found:
+            namespaces.append(ns_string)
+    else:
+        namespaces = [ns_string]
     # # Create and register the openclean API.
     engine = OpencleanAPI(
         identifier=engine_id,

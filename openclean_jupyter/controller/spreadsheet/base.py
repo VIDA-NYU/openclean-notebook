@@ -7,17 +7,20 @@
 
 """Request handler for the spreadsheet view in the notebook."""
 
+from flowserv.service.run.argument import deserialize_arg
 from jsonschema import Draft7Validator, RefResolver
-from typing import Dict
+from typing import Any, Dict, List, Tuple
 
 import importlib.resources as pkg_resources
 import json
 import os
 
+
 from openclean_jupyter.controller.comm import register_handler
 from openclean_jupyter.controller.html import make_html
-from openclean_jupyter.controller.spreadsheet.data import Dataset
-from openclean_jupyter.metadata.datamart import DatamartProfiler
+from openclean_jupyter.engine import OpencleanAPI
+
+import openclean_jupyter.controller.spreadsheet.data as ds
 
 
 """Create schema validator for API requests."""
@@ -39,99 +42,55 @@ def spreadsheet_api(request: Dict) -> Dict:
     full Json Schema definition):
 
     ```
-    dependencies:
-      command:
-      - columns
-    description: General structure for requests that are handled by the spreadsheet API
-    properties:
-      args:
-        description: List of key-value pairs for additional function arguments
-        items:
-          properties:
-            name:
-              description: Unique argument name
-              type: string
-            value:
-              oneOf:
-              - type: number
-              - type: string
-              - type: object
-              - type: array
-          type: object
-        type: array
-      columns:
-        description: List of index positions for columns that are targets (and potentially
-          sources) for the evaluation function
-        items:
-          type: integer
-        type: array
-      command:
-        description: Definition of executed command
-        properties:
-          name:
-            description: Unique name for registered evaluation function
-            type: string
-          namespace:
-            description: Optional namespace identifier
-            type: string
-          optype:
-            description: Identifier for type of action (insert or update)
-            enum:
-            - ins
-            - upd
-            type: string
-        required:
-        - optype
-        - name
-        type: object
-      dataset:
-        description: Identifier for the dataset that is being accessed
-        properties:
-          database:
-            description: Identifier of the database engine that manages the dataset
-            type: string
-          name:
-            description: Unique dataset name
-            type: string
-        required:
-        - database
-        - name
-        type: object
-      includeMetadata:
-        description: Include profiling metadata in the response if true
-        type: boolean
-      limit:
-        description: Maximum number of rows in the response
-        minimum: 1
-        type: integer
-      offset:
-        description: Offset for first row in the response
-        minimum: 0
-        type: integer
-      sources:
-        description: List of index positions for alternative input columns
-        items:
-          type: integer
-        type: array
-    required:
-    - dataset
-    type: object
     ```
+
+    Each request contains at least (i) the reference to the dataset that is being
+    displayed in the spreadsheet view and (ii) the query parameters that determine
+    the information that is expected in the returned response.
 
     The 'dataset' element contains a serialization of the dataset locator.
     Datasets are identified by their unique name and the identifier of the
     database engine that maintains them.
 
-    The type of the action that is being performed depends on the presence (or
-    absence) or the 'command' element. If a command is specified the dataset is
-    being modified by the given command. If no command is specified rows for
-    from the dataset are fetched. Fr a fetch operation only the 'limit', 'offset',
-    and 'includeMetadata' elements are considered.
+    The request may contain an optional 'action' element. The action defines an
+    opertation that is applied to the dataset before returning data from the
+    modified dataset. The API supports four different actions (identified by the
+    'type' element in the action object):
+
+    - commit:   apply all uncommitted changes to the full dataset. This action
+                is only available for datasets that are samples of a larger
+                dataset. The commit will execute all operations that were
+                previously applied to the sample on the full dataset.
+    - inscol:   Insert one or multiple columns into the dataset. The additional
+                'payload' object specifies the new column names, the insert
+                positions, and default values for the inserted columns.
+    - rollback: Rollback uncommitted changes. Like the commit, this action is
+                only available for datasets that are samples of a larger dataset.
+                The 'payload' element contains the target dataset version identifier
+                for the rollback. The rollback will undo all changes that result
+                from operations in the dataset history that occurred after the
+                target version.
+    - update:   Update one or multiple columns in the dataset. The additional
+                'payload' object specifies the updated columns and the function
+                (or constants) that generates the updated column values.
+
+    Each request will return at least the dataset schema and a subset of the
+    dataset rows. The maximum nuber of rows in the response is controlled by the
+    'limit' parameter . The default is defined by the DEFAULT_LIMIT variable. In
+    the future we may want to introduce an environment variable for this.
+
+    The response will contain additional metadata if (i) the 'includeMetadata'
+    flag is set to True or if an action is performed that modifies the dataset.
+    Metadata includes the results of a data profiler as well as the list of
+    uncommitted actions (only if the dataset is a sample of a larger dataset).
+    In addition, the request can contain the 'includeLibrary' flag in order to
+    obtain a list of registered commands (evaluation functions) that can be
+    applied to the dataset.
 
     Parameters
     ----------
     request: dict
-        Request data.
+        Request body.
 
     Returns
     -------
@@ -139,182 +98,115 @@ def spreadsheet_api(request: Dict) -> Dict:
     """
     # Validate the given request against the API request schema.
     validator.validate(request)
-    # Get the dataset locator. This will raise an error if the locator is
-    # invalid or not present.
-    dataset = Dataset.deserialize(request.get('dataset'))
-    # Depending on whether the command element is present or not the dataset is
-    # either modified or rows from the dataset are being fetched.
-    if 'command' in request:
-        # Note that for an evaluation command we return the metadata of the
-        # created dataset snapshot by default. The argument is that the metadata
-        # may have changed as a result of the modification operation.
-        return eval_command(
-            dataset=dataset,
-            command=request['command'],
-            limit=request.get('limit', DEFAULT_LIMIT),
-            offset=request.get('offset', 0),
-            include_metadata=request.get('includeMetadata', True)
-        )
-    else:
-        # Note that for a nor mal fetch operation the dataset metadata is not
-        # included in the response. The argument here is that the metadata does
-        # not change inbetween fetch operations (i.e., only needs to be read
-        # as part of the first fetch request).
-        return fetch_rows(
-            dataset=dataset,
-            limit=request.get('limit', DEFAULT_LIMIT),
-            offset=request.get('offset', 0),
-            include_metadata=request.get('includeMetadata', False)
-        )
-
-
-# -- API operations -----------------------------------------------------------
-
-def eval_command(
-    dataset: Dataset, command: Dict, limit: int, offset: int, include_metadata: bool
-) -> Dict:
-    """Evaluate a command on a given dataset. The command dictionary contains
-    the type of action ('insert' or 'update') and the evaluation function. The
-    function has to be a function that is registered with the object repository
-    for the database engine of the dataset. The list of arguments are dictionaries
-    of key-value pairs for function-specific arguments.
-
-    Returns the engine for the updated dataset snapshot.
-
-    Raises a ValueError if (i) no command identifier is given, (ii) the
-    command identifier is unknown, or (iii) the given argument values do
-    not satisfy the parameter constraints of the selected command.
-
-    Parameters
-    ----------
-    dataset: openclean_jupyter.controller.spreadsheet.data.Dataset
-        Dataset that is being modified.
-    command: dict
-        Definition of the command that is being executed.
-    limit: int, default=10
-        Maximum number of rows that are being returned in the response.
-    offset: int, default=0
-        Index of the first row that is being returned in the response.
-    include_metadata: bool, default=True
-        Flag to determine whether to include profiling metadata in the response
-        or not .
-
-    Returns
-    -------
-    dict
-
-    Raises
-    ------
-    ValueError
-    """
-    # The type of the operations is currently distinguished between insert and
-    # update based on the presence of the 'names' or 'columns' element.
-    if 'names' in command:
-        dataset.insert(
-            names=command.get('names'),
-            pos=command.get('pos'),
-            values=command.get('values'),
-            args=command.get('args'),
-            sources=command.get('sources')
-        )
-    elif 'columns' in command:
-        dataset.update(
-            columns=command.get('columns'),
-            func=command.get('func'),
-            args=command.get('args'),
-            sources=command.get('sources')
-        )
-    else:
-        raise ValueError("unknown operation '{}'".format(command))
-    return fetch_rows(
-        dataset=dataset,
-        limit=limit,
-        offset=offset,
-        include_metadata=include_metadata
-    )
-
-
-def fetch_rows(dataset: Dataset, limit: int, offset: int, include_metadata: bool) -> Dict:
-    """Fetch limited number of rows from a dataset. Returns a serialization of
-    the columns in the dataset schema and the fetched rows. The result has the
-    following schema:
-
-    - dataset:
-      - name: string
-        engine: string
-    - columns:
-      - id: int
-        name: string
-    - rows:
-      - id: int
-        values: []
-    - offset: int
-    - rowCount: int
-
-    Parameters
-    ----------
-    dataset: openclean_jupyter.controller.spreadsheet.data.Dataset
-        Dataset for which rows are being fetched.
-    limit: int, default=10
-        Maximum number of rows that are being fetched.
-    offset: int, default=0
-        Index of the first row that is being fetched.
-    include_metadata: bool, default=True
-        Flag to determine whether to include profiling metadata in the response
-        or not .
-
-    Returns
-    -------
-    dict
-    """
+    # Get the dataset handle and API engine.
+    dataset, engine = ds.deserialize(request['dataset'])
+    # If the action element is present we first apply the specified operation on
+    # the dataset before returning data from the (modified) dataset.
+    action = request.get('action')
+    if action is not None:
+        action_type = action['type']
+        payload = action.get('payload')
+        if action_type == 'commit':
+            dataset.commit()
+        elif action_type == 'inscol':
+            values, args = get_eval(
+                engine=engine,
+                func=payload.get('values'),
+                args=payload.get('args')
+            )
+            dataset.insert(
+                names=payload.get('names'),
+                pos=payload.get('pos'),
+                values=values,
+                args=args,
+                sources=payload.get('sources')
+            )
+        elif action_type == 'rollback':
+            dataset.rollback(payload)
+        else:  # action_type == 'update'
+            func, args = get_eval(
+                engine=engine,
+                func=payload.get('func'),
+                args=payload.get('args')
+            )
+            dataset.update(
+                columns=payload.get('columns'),
+                func=func,
+                args=args,
+                sources=payload.get('sources')
+            )
+    # Return data from the (modified) dataset. Note that by default metadata is
+    # included in the response if the request contained an action element that
+    # modified the underlying dataset (and therefore the dataset metadata may
+    # have changed as well).
+    fetch = request['fetch']
+    limit = fetch.get('limit', DEFAULT_LIMIT)
+    offset = fetch.get('offset', 0)
+    include_metadata = fetch.get('includeMetadata', action is not None)
+    include_library = fetch.get('includeLibrary', False)
     # Load the latest snapshot of the referenced dataset.
     df = dataset.checkout()
-    # Serialize dataset rows.
+    # Create basic response document.
     row_count = df.shape[0]
-    end = min(offset + limit, row_count)
-    rows = list()
-    for rid, values in df[offset:end].iterrows():
-        rows.append({'id': rid, 'values': list(values)})
-    # Create response document.
     doc = {
-            'dataset': dataset.serialize(),
+            'dataset': request['dataset'],
             'columns': list(df.columns),
-            'rows': rows,
+            'rows': ds.fetch_rows(
+                df=df,
+                offset=offset,
+                end=min(offset + limit, row_count)
+            ),
             'offset': offset,
             'rowCount': row_count
         }
-    # Add metadata to response if the include_metadata flag is True
+    # Add metadata to response if the include_metadata flag is True.
     if include_metadata:
-        metadata = dataset.metadata()
-        if not metadata.has_annotation(key='profiling'):
-            # We only need to invoke the profiler if the profiling metadata
-            # does not already exists for the dataset snapshot.
-            profiles = DatamartProfiler().profile(df)
-            metadataJSON = {
-                'id': dataset.version(),
-                'name': '',
-                'description': '',
-                'size': profiles['size'] if 'size' in profiles else 0,
-                'nb_rows': profiles['nb_rows'],
-                'nb_profiled_rows': profiles['nb_profiled_rows'],
-                'materialize': {},
-                'date': '',
-                'sample': profiles['sample'] if 'sample' in profiles else '',
-                'source': 'openclean-notebook',
-                'version': '0.1',
-                'columns': profiles['columns'],
-                'types': profiles['types']
-            }
-            metadata.set_annotation(
-                key='profiling',
-                value=metadataJSON
-            )
-        else:
-            # use metadata from previous profiler run.
-            metadataJSON = metadata.get_annotation(key='profiling')
-        doc['metadata'] = metadataJSON
-    # Return fetch_rows response.
+        doc['metadata'] = ds.fetch_metadata(df=df, dataset=dataset)
+    # Add serialization of registered evaluation functions if requested.
+    if include_library:
+        doc['library'] = engine.library_dict()
     return doc
+
+
+def get_eval(engine: OpencleanAPI, func: Any, args: List[Dict]) -> Tuple[Any, Dict]:
+    """Get evaluation function handle or scalar value from a specification for
+    and update function or value generator for inserted columns. If the func
+    argument is for a function handle the argument list is validated against
+    the function parameters and converted into a dictionary.
+
+    Parameters
+    ----------
+    engine: openclean_jupyter.engine.OpencleanAPI
+        Engine that contains the library of registered functions.
+    func: any
+        Specification for an evaluation function (dict) or constant scalar
+        value.
+    args: list of dict
+        List of optional argument values. The given value may be None.
+    Returns
+    -------
+    tuple of any, dict
+    """
+    if isinstance(func, dict):
+        # If the specification is a dictionary we assume that it is the
+        # serialization of a functin handle identifier.
+        f = engine.library.get(name=func['name'], namespace=func.get('namespace'))
+        # Convert arguments into a dictionary.
+        func_args = None
+        if args is not None:
+            func_args = dict()
+            # Map parameter names to parameter declarations.
+            paras = {p.name: p for p in f.parameters}
+            for arg in args:
+                arg_id, arg_val = deserialize_arg(arg)
+                para = paras.get(arg_id)
+                if para is None:
+                    raise ValueError("unknown parameter '{}'".format(arg_id))
+                func_args[arg_id] = para.cast(arg_val)
+        return f, func_args
+    # For any other value we return the function specification (assumed to be a
+    # scalar constant at this point) and the arguments as is.
+    return func, args
 
 
 # -- Spreadsheet controller ---------------------------------------------------
@@ -336,10 +228,10 @@ def spreadsheet(name: str, engine: str):
     view = make_html(
             template='spreadsheet.html',
             library='build/opencleanVis.js',
-            data=Dataset(name=name, engine=engine).serialize()
+            data=ds.serialize(name=name, engine=engine)
         )
     # Embed the spreadsheet HTML into the notebook.
-    try:
+    try:  # pragma: no cover
         from IPython.core.display import display, HTML
         display(HTML(view))
     except ImportError:
