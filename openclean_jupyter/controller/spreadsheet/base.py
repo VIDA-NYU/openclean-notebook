@@ -42,6 +42,33 @@ def spreadsheet_api(request: Dict) -> Dict:
     full Json Schema definition):
 
     ```
+    request:
+        type: object
+        properties:
+          action:
+            oneOf:
+            - $ref: '#/definitions/actionCommit'
+            - $ref: '#/definitions/actionInsert'
+            - $ref: '#/definitions/actionRollback'
+            - $ref: '#/definitions/actionUpdate'
+          dataset:
+            $ref: '#/definitions/datasetRef'
+          fetch:
+            properties:
+              includeLibrary:
+                type: boolean
+              includeMetadata:
+                type: boolean
+              limit:
+                minimum: 1
+                type: integer
+              offset:
+                minimum: 0
+                type: integer
+            type: object
+        required:
+        - dataset
+        - fetch
     ```
 
     Each request contains at least (i) the reference to the dataset that is being
