@@ -220,7 +220,7 @@ function TableColumnView(props: {
           </td>
         );
         return (
-          <tr key={'column' + i} {...column.getHeaderProps()}>
+          <tr {...column.getHeaderProps()}>
             <td>
               <b>{column.render('Header')} </b>
             </td>
