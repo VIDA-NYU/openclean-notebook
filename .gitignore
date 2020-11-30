@@ -47,6 +47,7 @@ coverage.xml
 .hypothesis/
 .pytest_cache
 
+openclean_jupyter/ui/node_modules/
 
 # Translations
 *.mo
