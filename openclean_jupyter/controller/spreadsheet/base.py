@@ -95,8 +95,8 @@ def spreadsheet_api(request: Dict) -> Dict:
                 only available for datasets that are samples of a larger dataset.
                 The 'payload' element contains the target dataset version identifier
                 for the rollback. The rollback will undo all changes that result
-                from operations in the dataset history that occurred after the
-                target version.
+                from operations in the dataset history that occurred at and
+                after the target version.
     - update:   Update one or multiple columns in the dataset. The additional
                 'payload' object specifies the updated columns and the function
                 (or constants) that generates the updated column values.

@@ -177,9 +177,36 @@
                                 "type": "object",
                                 "properties": {
                                     "id": {"type": "string"},
-                                    "op": {"type": "object"},
+                                    "op": {
+                                        "type": "object",
+                                        "properties": {
+                                            "optype": {
+                                                "type": "string",
+                                                "enum": ["inscol", "load", "update"]
+                                            },
+                                            "name": {"type": "string"},
+                                            "namespace": {"type": "string"},
+                                            "columns": {"type": "array", "items": {"type": "string"}},
+                                            "sources": {"type": "array", "items": {"type": "string"}},
+                                            "pos": {"type": "number"},
+                                            "value": {},
+                                            "parameters": {
+                                                "type": "array",
+                                                "items": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "name": {"type": "string"},
+                                                        "value": {"type": "string"}
+                                                    },
+                                                    "required": ["name", "value"]
+                                                }
+                                            }
+                                        },
+                                        "required": ["optype"]
+                                    },
                                     "isCommitted": {"type": "boolean"}
-                                }
+                                },
+                                "required": ["id", "op", "isCommitted"]
                             }
                         }
                     },

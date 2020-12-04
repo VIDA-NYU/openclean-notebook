@@ -176,7 +176,7 @@ def test_rollback_and_commit(engine, validator):
     assert not log[2]['isCommitted']
     values = [r['values'][2] for r in doc['rows']]
     # -- Rollback the last operation --
-    action = {'type': 'rollback', 'payload': log[1]['id']}
+    action = {'type': 'rollback', 'payload': log[2]['id']}
     doc = spreadsheet_api(request(handle, fetch={}, action=action))
     log = doc['metadata']['log']
     assert len(log) == 2
