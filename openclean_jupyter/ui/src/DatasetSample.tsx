@@ -1,6 +1,6 @@
 import * as React from 'react';
 import {useTable, Column, ColumnInstance, HeaderGroup} from 'react-table';
-import { ColumnMetadata, CommandRef, RequestResult, SpreadsheetData } from './types';
+import { ColumnMetadata, CommandRef, FunctionSpec, RequestResult, SpreadsheetData } from './types';
 import './DatasetSample.css';
 import {VegaLite} from 'react-vega';
 import {TopLevelSpec as VlSpec} from 'vega-lite';
@@ -245,7 +245,7 @@ function TableColumnView(props: {
 function TableCompactDetailView(props: {
   tableProps: TableProps;
   requestResult: RequestResult;
-  onCommandClick: (command: CommandRef, column: number) => void;
+  onCommandClick: (command: FunctionSpec, columnIndex: number) => void;
 }) {
   const {columns, data, hit, typeView, requestResult} = props.tableProps;
   const {getTableBodyProps, headerGroups, rows, prepareRow} = useTable({
@@ -275,13 +275,13 @@ function TableCompactDetailView(props: {
                     <span className="caret"></span>
                   </button>
                   <div className="dropdown-content">
-                    {requestResult.library.functions.map(command => (
+                    {requestResult.library && requestResult.library.functions.map(command => (
                       <div
                         key={command.name}
                         className="menu-link"
                         onClick={() =>
                             props.onCommandClick(
-                              {name: command.name, namespace: command.namespace},
+                              command,
                               i
                             )
                         }
@@ -333,7 +333,7 @@ interface TableProps {
   hit: SpreadsheetData;
   typeView: tableViews;
   requestResult: RequestResult;
-  onCommandClick: (command: string, type: string) => void;
+  onCommandClick: (command: FunctionSpec, columnIndex: number) => void;
   onPageClick: (offset: number) => void;
   pageSize: number;
 }
@@ -355,8 +355,8 @@ function Table(props: TableProps) {
         <TableCompactDetailView
           tableProps={props}
           requestResult={requestResult}
-          onCommandClick={(command, columnName) => {
-            props.onCommandClick(command, columnName);
+          onCommandClick={(command, columnIndex) => {
+            props.onCommandClick(command, columnIndex);
           }}
         />
       )}
@@ -381,7 +381,7 @@ function Table(props: TableProps) {
 interface TableSampleProps {
   hit: SpreadsheetData;
   requestResult: RequestResult;
-  onCommandClick: (command: string, type: string) => void;
+  onCommandClick: (command: FunctionSpec, columnIndex: number) => void;
   onPageClick: (offset: number) => void;
   pageSize: number;
 }
@@ -455,8 +455,8 @@ class DatasetSample extends React.PureComponent<
               hit={hit}
               typeView={this.state.typeView}
               requestResult={this.props.requestResult}
-              onCommandClick={(command, columnName) => {
-                this.props.onCommandClick(command, columnName);
+              onCommandClick={(command, columnIndex) => {
+                this.props.onCommandClick(command, columnIndex);
               }}
               onPageClick={(offset) => {
                 this.props.onPageClick(offset);

@@ -8,7 +8,7 @@
 
 import * as React from 'react';
 import CommAPI from './CommAPI';
-import { CommandRef, RequestResult } from './types';
+import { CommandRef, FunctionSpec, ProfilingResult, RequestResult, SpreadsheetData } from './types';
 import {DatasetSample} from './DatasetSample';
 
 
@@ -49,8 +49,8 @@ class SpreadSheet extends React.PureComponent<TableSampleProps, TableSampleState
                 offset: 0,
                 rowCount: 0,
                 rows: [],
-                library: [],
-                metadata: {}
+                // library: [],
+                // metadata: {}
             }
         };
         // Initial call to the spreadsheet API that fetches the dataset schema,
@@ -69,12 +69,12 @@ class SpreadSheet extends React.PureComponent<TableSampleProps, TableSampleState
      * Create a spreadsheet data object that contains the column names and row
      * sample together with the optional profiler results.
      */
-    getSpreadsheetData(requestResult: RequestResult) {
+    getSpreadsheetData(requestResult: RequestResult): SpreadsheetData {
         const columnNames = [requestResult.columns.map(col => col)];
         const rowsValues = requestResult.rows.map(row => row.values);
 
-        let metadata = [];
-        if (requestResult.metadata.profiling) {
+        let metadata = {};
+        if (requestResult.metadata && requestResult.metadata.profiling) {
             const profile = requestResult.metadata.profiling;
             metadata = {
                 id: profile.id,
@@ -83,7 +83,7 @@ class SpreadSheet extends React.PureComponent<TableSampleProps, TableSampleState
         }
 
         return {
-            metadata: metadata,
+            metadata: metadata as ProfilingResult,
             sample: columnNames.concat(rowsValues),
         };
     }
@@ -92,14 +92,15 @@ class SpreadSheet extends React.PureComponent<TableSampleProps, TableSampleState
      * Apply a given update operation on the dataset. The response will contain
      * the modified data rows and the updated profiling results and command log.
      */
-    onCommandClick(command: CommandRef, columnIndex: number, limit: number) {
+    onCommandClick(command: FunctionSpec, columnIndex: number, limit: number) {
+        const commandRef: CommandRef = {name: command.name, namespace: command.namespace ? command.namespace : ''};
         this.commSpreadsheetApi.call({
             dataset: this.props.data,
             action: {
                 type: 'update',
                 payload: {
                     columns: [columnIndex],
-                    func: command
+                    func: commandRef
                 }
             },
             fetch: {
@@ -159,7 +160,7 @@ class SpreadSheet extends React.PureComponent<TableSampleProps, TableSampleState
     render() {
         const hit = this.getSpreadsheetData(this.state.result);
         const defaultLimit = 10;
-        const log = this.state.result.metadata.log;
+        const log = this.state.result.metadata ? this.state.result.metadata.log : null;
         // Add opertion log and commit button (for test purposes).
         const opList = [];
         let hasUncommitted = false;
