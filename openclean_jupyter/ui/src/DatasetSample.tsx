@@ -413,6 +413,7 @@ class DatasetSample extends React.PureComponent<
     }));
     return (
       <div className="mt-2">
+        {/* <h6>Dataset Sample:</h6> */}
         <div>
           <div
             className="btn-group btn-group-sm"

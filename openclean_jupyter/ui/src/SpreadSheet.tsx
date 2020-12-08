@@ -10,14 +10,22 @@ import * as React from 'react';
 import CommAPI from './CommAPI';
 import { CommandRef, FunctionSpec, ProfilingResult, RequestResult, SpreadsheetData } from './types';
 import {DatasetSample} from './DatasetSample';
-
+import { RecipeDialog, AppliedOperator } from './Recipe/RecipeDialog';
+import './SpreadSheet.css';
+import { Recipe } from './Recipe/Recipe';
 
 interface TableSampleProps {
   data: string;
 }
 
 interface TableSampleState {
-    result: RequestResult;
+  result: RequestResult;
+  appliedOperators: Operator[];
+  recipeDialogStatus: boolean;
+}
+export interface Operator {
+  name: string;
+  column: string;
 }
 
 
@@ -51,7 +59,9 @@ class SpreadSheet extends React.PureComponent<TableSampleProps, TableSampleState
                 rows: [],
                 // library: [],
                 // metadata: {}
-            }
+            },
+            appliedOperators: [],
+            recipeDialogStatus: false,
         };
         // Initial call to the spreadsheet API that fetches the dataset schema,
         // the first 10 dataset rows, the profiling results (includeMetadata: true),
@@ -63,6 +73,9 @@ class SpreadSheet extends React.PureComponent<TableSampleProps, TableSampleState
                 includeMetadata: true
             }
         });
+        this.openRecipeDialog = this.openRecipeDialog.bind(this);
+        this.closeRecipeDialog = this.closeRecipeDialog.bind(this);
+        this.onRollback = this.onRollback.bind(this);
     }
 
     /*
@@ -93,21 +106,30 @@ class SpreadSheet extends React.PureComponent<TableSampleProps, TableSampleState
      * the modified data rows and the updated profiling results and command log.
      */
     onCommandClick(command: FunctionSpec, columnIndex: number, limit: number) {
-        const commandRef: CommandRef = {name: command.name, namespace: command.namespace ? command.namespace : ''};
-        this.commSpreadsheetApi.call({
-            dataset: this.props.data,
-            action: {
-                type: 'update',
-                payload: {
-                    columns: [columnIndex],
-                    func: commandRef
-                }
-            },
-            fetch: {
-                offset: this.state.result.offset,
-                limit: limit
-            }
-        });
+      const newOperator: Operator = {"name": command.name, "column": 'columnName'};
+      let temp = this.state.appliedOperators;
+      if(temp.length > 0 ) {
+        temp.push(newOperator);
+      } else {
+        temp = [newOperator];
+      }
+      this.setState({appliedOperators: temp, recipeDialogStatus: false});
+
+      const commandRef: CommandRef = {name: command.name, namespace: command.namespace ? command.namespace : ''};
+      this.commSpreadsheetApi.call({
+          dataset: this.props.data,
+          action: {
+              type: 'update',
+              payload: {
+                  columns: [columnIndex],
+                  func: commandRef
+              }
+          },
+          fetch: {
+              offset: this.state.result.offset,
+              limit: limit
+          }
+      });
     }
 
     /*
@@ -140,6 +162,13 @@ class SpreadSheet extends React.PureComponent<TableSampleProps, TableSampleState
         });
     }
 
+    openRecipeDialog(){
+      this.setState({recipeDialogStatus: true});
+    };
+    closeRecipeDialog(){
+      this.setState({recipeDialogStatus: false});
+    };
+
     /*
     * Rollback all changes to the log entry with the given identfier.
     */
@@ -160,28 +189,18 @@ class SpreadSheet extends React.PureComponent<TableSampleProps, TableSampleState
     render() {
         const hit = this.getSpreadsheetData(this.state.result);
         const defaultLimit = 10;
-        const log = this.state.result.metadata ? this.state.result.metadata.log : null;
-        // Add opertion log and commit button (for test purposes).
-        const opList = [];
-        let hasUncommitted = false;
-        if (log != null) {
-            log.map(e => {
-                let op = e.op;
-                let name = op.optype;
-                if (op.name) {
-                    name += ' - ' + op.name;
-                }
-                let handleRollback = null;
-                if (!e.isCommitted) {
-                    hasUncommitted = true;
-                    handleRollback = () => (this.onRollback(e.id, defaultLimit));
-                }
-                opList.push(<p key={e.id} onClick={handleRollback}>{name}</p>);
-            });
-        }
         return (
             <div className="mt-2">
                 <div className="d-flex flex-row">
+                  {
+                    this.state.result.metadata &&
+                    <Recipe
+                      operatorProvenance={this.state.result.metadata.log}
+                      openRecipeDialog={() => this.openRecipeDialog()}
+                      onRollback = {(id: string) => {this.onRollback(id, defaultLimit)}}
+                      onCommit = {() => this.onCommit(defaultLimit)}
+                    />
+                  }
                     <DatasetSample
                         hit={hit}
                         requestResult={this.state.result}
@@ -193,17 +212,15 @@ class SpreadSheet extends React.PureComponent<TableSampleProps, TableSampleState
                         }}
                         pageSize={defaultLimit}
                     />
-                    <div>
-                        <h3>Recipe</h3>
-                        { opList }
-                    </div>
-                    <button
-                        type='button'
-                        onClick={() => (this.onCommit(defaultLimit))}
-                        disabled={!hasUncommitted}
-                    >
-                        Save
-                    </button>
+                    <RecipeDialog
+                      result={this.state.result}
+                      handleDialogExecution={(selectedOperator: AppliedOperator) => {
+                        selectedOperator.operator &&
+                        this.onCommandClick(selectedOperator.operator, selectedOperator.columnIndex, defaultLimit);
+                      }}
+                      dialogStatus={this.state.recipeDialogStatus}
+                      closeRecipeDialog={() => this.closeRecipeDialog()}
+                    />
                 </div>
             </div>
         );
