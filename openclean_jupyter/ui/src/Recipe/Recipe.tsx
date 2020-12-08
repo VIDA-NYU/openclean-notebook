@@ -1,15 +1,22 @@
 import * as React from 'react';
 import * as Icon from 'react-feather';
+import { OpProv } from '../types';
 import {Operator} from './../SpreadSheet';
 interface RecipeProps {
-    appliedOperators: Operator[];
+    operatorProvenance: OpProv[];
     openRecipeDialog: () => void;
+    onRollback: (id: string) => void;
+    onCommit: () => void;
 }
 interface RecipeStates{
 }
 class Recipe extends React.PureComponent<RecipeProps, RecipeStates> {
     constructor(props: RecipeProps) {
         super(props);
+    }
+    isCommited(){
+      const list = this.props.operatorProvenance.map(operator => operator.isCommitted);
+      return list.some((element) => element)
     }
 
     render() {
@@ -29,6 +36,16 @@ class Recipe extends React.PureComponent<RecipeProps, RecipeStates> {
                     style={{
                       float: 'initial', fontSize: 12}}
                   >
+              <button
+                type="button"
+                title="Apply changes to the full dataset"
+                className="btn-gray active"
+                style={{paddingTop:0, paddingBottom:0}}
+                onClick={() => this.props.onCommit()}
+                disabled={this.isCommited()}
+              >
+                Apply
+              </button>
               <button
                 type="button"
                 title="Add this operator"
@@ -51,16 +68,20 @@ class Recipe extends React.PureComponent<RecipeProps, RecipeStates> {
             <div style={{fontSize: 12, padding:4, height: 519, maxHeight: 519, overflow: 'auto'}}>
               Applied operators:
               <hr style={{marginTop: 6}}></hr>
-              {this.props.appliedOperators.length >0 && this.props.appliedOperators.map(c => (
-                <div key={c.name}>
+              {this.props.operatorProvenance.length >0 && this.props.operatorProvenance.map(operator => (
+                <div key={operator.id}>
                 <span className={`badge badge-pill`}>
-                  {c.name}
-                  {
+                  {operator.op.name}
+                  {!operator.isCommitted &&
                     <button
                       type="button"
                       title="Remove this operator"
                       className="btn btn-link badge-corner-button"
-                      // onClick={() => props.onClick && props.onClick()}
+                      onClick={() =>
+                        this.props.onRollback(
+                          operator.id
+                        )
+                      }
                     >
                       <Icon.XCircle size={13} />
                     </button>
@@ -68,8 +89,9 @@ class Recipe extends React.PureComponent<RecipeProps, RecipeStates> {
                 </span>
                 <div>
                 <ul>
-                  <li>Operator: {c.name}</li>
-                  <li>Column: {c.column}</li>
+                  {operator.op.name && <li>Operator: {operator.op.name}</li>}
+                  {operator.op.optype && <li>Type: {operator.op.optype} </li>}
+                  {operator.op.columns && <li>Column: {operator.op.columns && operator.op.columns[0]}</li>}
                 </ul>
                 </div>
                 <hr></hr>

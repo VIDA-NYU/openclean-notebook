@@ -8,11 +8,14 @@ import DialogTitle from '@material-ui/core/DialogTitle';
 import InputLabel from '@material-ui/core/InputLabel';
 import MenuItem from '@material-ui/core/MenuItem';
 import Select from '@material-ui/core/Select';
-import { RequestResult } from '../types';
+import { FunctionSpec, RequestResult } from '../types';
 
 export interface AppliedOperator {
-    operator: string;
+    operatorName: string;
+    operatorIndex: number;
     columnName: string;
+    columnIndex: number;
+    operator?: FunctionSpec;
 }
 interface RecipeDialogState {
     selectedOperator: AppliedOperator;
@@ -28,14 +31,25 @@ class RecipeDialog extends React.PureComponent <RecipeDialogProps, RecipeDialogS
     constructor(props: RecipeDialogProps) {
         super(props);
         this.state = {
-            selectedOperator: {operator: '', columnName: ''},
+            selectedOperator: {
+              operatorName: '',
+              operatorIndex: 0,
+              columnName: '',
+              columnIndex: 0,
+            },
         }
     }
-    handleAddOperator(operator: string) {
-        this.setState({selectedOperator: {...this.state.selectedOperator, operator: operator}});
+    handleAddOperator(operatorIndex: number) {
+        this.setState({
+          selectedOperator: {
+            ...this.state.selectedOperator,
+            operatorIndex: operatorIndex,
+            operator: this.props.result.library?.functions[operatorIndex]
+          }
+        });
     }
-    handleAddColumn(columnName: string) {
-        this.setState({selectedOperator: {...this.state.selectedOperator, columnName: columnName}});
+    handleAddColumn(columnIndex: number) {
+        this.setState({selectedOperator: {...this.state.selectedOperator, columnIndex: columnIndex}});
     }
     render(){
         const {result, dialogStatus} = this.props;
@@ -57,13 +71,14 @@ class RecipeDialog extends React.PureComponent <RecipeDialogProps, RecipeDialogS
                     <InputLabel htmlFor="max-width">Column</InputLabel>
                     <Select
                       autoFocus
-                      value={this.state.selectedOperator.columnName}
+                      // value={this.state.selectedOperator.columnName}
+                      value={this.state.selectedOperator.columnIndex}
                       onChange={e => {
-                        this.handleAddColumn(e.target.value as string);
+                        this.handleAddColumn(e.target.value as number);
                       }}
                     >
                       {
-                      result.columns.map(col => <MenuItem value={col.name}>{col.name}</MenuItem> )
+                      result.columns.map((colName, idx) => <MenuItem value={idx}>{colName}</MenuItem> )
                       }
                     </Select>
                     </div>
@@ -72,13 +87,13 @@ class RecipeDialog extends React.PureComponent <RecipeDialogProps, RecipeDialogS
                     <InputLabel htmlFor="max-width">Operator</InputLabel>
                     <Select
                       autoFocus
-                      value={this.state.selectedOperator.operator}
+                      value={this.state.selectedOperator.operatorIndex}
                       onChange={e => {
-                        this.handleAddOperator(e.target.value as string);
+                        this.handleAddOperator(e.target.value as number);
                       }}
                     >
                       {
-                      result.commands.map(command => <MenuItem value={command}>{command}</MenuItem> )
+                      result.library && result.library.functions.map((lib, idx)=> <MenuItem value={idx}>{lib.name}</MenuItem> )
                       }
                     </Select>
                   </div>
