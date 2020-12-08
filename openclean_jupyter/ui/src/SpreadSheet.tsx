@@ -2,11 +2,20 @@ import * as React from 'react';
 import CommAPI from './CommAPI';
 import {RequestResult, ColumnMetadata} from './types';
 import {DatasetSample} from './DatasetSample';
+import { RecipeDialog, AppliedOperator } from './Recipe/RecipeDialog';
+import { Recipe } from './Recipe/Recipe';
+
 interface TableSampleProps {
   data: string;
 }
 interface TableSampleState {
   result: RequestResult;
+  appliedOperators: Operator[];
+  recipeDialogStatus: boolean;
+}
+export interface Operator {
+  name: string;
+  column: string;
 }
 class SpreadSheet extends React.PureComponent<
   TableSampleProps,
@@ -38,7 +47,11 @@ class SpreadSheet extends React.PureComponent<
         row_count: 0,
         rows: [],
       },
+      appliedOperators: [],
+      recipeDialogStatus: false,
     };
+    this.openRecipeDialog = this.openRecipeDialog.bind(this);
+    this.closeRecipeDialog = this.closeRecipeDialog.bind(this);
   }
 
   getMetadata(requestResult: RequestResult) {
@@ -71,6 +84,14 @@ class SpreadSheet extends React.PureComponent<
   }
 
   onCommandClick(command: string, columnName: string, limit: number) {
+    const newOperator: Operator = {"name": command, "column": columnName};
+    let temp = this.state.appliedOperators;
+    if(temp.length > 0 ) {
+      temp.push(newOperator);
+    } else {
+      temp = [newOperator];
+    }
+    this.setState({appliedOperators: temp, recipeDialogStatus: false});
     this.commPowersetAnalysis.call({
       dataset: this.state.result.dataset,
       action: 'exec',
@@ -93,12 +114,23 @@ class SpreadSheet extends React.PureComponent<
     });
   }
 
+  openRecipeDialog(){
+    this.setState({recipeDialogStatus: true});
+  };
+  closeRecipeDialog(){
+    this.setState({recipeDialogStatus: false});
+  };
+
   render() {
     const hit = this.getMetadata(this.state.result);
     const defaultLimit = 10;
     return (
       <div className="mt-2">
         <div className="d-flex flex-row">
+          <Recipe
+            appliedOperators={this.state.appliedOperators}
+            openRecipeDialog={() => this.openRecipeDialog()}
+          />
           <DatasetSample
             hit={hit}
             requestResult={this.state.result}
@@ -111,6 +143,14 @@ class SpreadSheet extends React.PureComponent<
             pageSize={defaultLimit}
           />
         </div>
+        <RecipeDialog
+          result={this.state.result}
+          handleDialogExecution={(selectedOperator: AppliedOperator) => {
+            this.onCommandClick(selectedOperator.operator, selectedOperator.columnName, defaultLimit);
+          }}
+          dialogStatus={this.state.recipeDialogStatus}
+          closeRecipeDialog={() => this.closeRecipeDialog()}
+        />
       </div>
     );
   }
