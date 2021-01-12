@@ -217,7 +217,7 @@ def get_eval(engine: OpencleanAPI, func: Any, args: List[Dict]) -> Tuple[Any, Di
     if isinstance(func, dict):
         # If the specification is a dictionary we assume that it is the
         # serialization of a functin handle identifier.
-        f = engine.library.get(name=func['name'], namespace=func.get('namespace'))
+        f = engine.library.functions().get_object(name=func['name'], namespace=func.get('namespace'))
         # Convert arguments into a dictionary.
         func_args = None
         if args is not None:
