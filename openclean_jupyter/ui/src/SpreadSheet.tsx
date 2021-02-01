@@ -105,7 +105,7 @@ class SpreadSheet extends React.PureComponent<TableSampleProps, TableSampleState
      * Apply a given update operation on the dataset. The response will contain
      * the modified data rows and the updated profiling results and command log.
      */
-    onCommandClick(command: FunctionSpec, columnIndex: number, limit: number) {
+    onCommandClick(command: FunctionSpec, columnIndex: number, limit: number, addColumn: boolean, newColumnName: string) {
       const newOperator: Operator = {"name": command.name, "column": 'columnName'};
       let temp = this.state.appliedOperators;
       if(temp.length > 0 ) {
@@ -116,20 +116,38 @@ class SpreadSheet extends React.PureComponent<TableSampleProps, TableSampleState
       this.setState({appliedOperators: temp, recipeDialogStatus: false});
 
       const commandRef: CommandRef = {name: command.name, namespace: command.namespace ? command.namespace : ''};
-      this.commSpreadsheetApi.call({
-          dataset: this.props.data,
-          action: {
-              type: 'update',
-              payload: {
-                  columns: [columnIndex],
-                  func: commandRef
-              }
-          },
-          fetch: {
-              offset: this.state.result.offset,
-              limit: limit
-          }
-      });
+      if (addColumn) {
+        this.commSpreadsheetApi.call({
+            dataset: this.props.data,
+            action: {
+                type: 'inscol',
+                payload: {
+                    names: [newColumnName],
+                    sources: [columnIndex],
+                    values: commandRef
+                }
+            },
+            fetch: {
+                offset: this.state.result.offset,
+                limit: limit
+            }
+        });
+      } else {
+        this.commSpreadsheetApi.call({
+            dataset: this.props.data,
+            action: {
+                type: 'update',
+                payload: {
+                    columns: [columnIndex],
+                    func: commandRef
+                }
+            },
+            fetch: {
+                offset: this.state.result.offset,
+                limit: limit
+            }
+        });
+      }
     }
 
     /*
@@ -199,13 +217,19 @@ class SpreadSheet extends React.PureComponent<TableSampleProps, TableSampleState
                       openRecipeDialog={() => this.openRecipeDialog()}
                       onRollback = {(id: string) => {this.onRollback(id, defaultLimit)}}
                       onCommit = {() => this.onCommit(defaultLimit)}
+                      result={this.state.result}
+                      handleDialogExecution={(selectedOperator: AppliedOperator) => {
+                        selectedOperator.operator &&
+                        this.onCommandClick(selectedOperator.operator, selectedOperator.columnIndex, defaultLimit, selectedOperator.checked, selectedOperator.newColumnName);
+                      }}
+                      closeRecipeDialog={() => this.closeRecipeDialog()}
                     />
                   }
                     <DatasetSample
                         hit={hit}
                         requestResult={this.state.result}
                         onCommandClick={(command, columnIndex) => {
-                            this.onCommandClick(command, columnIndex, defaultLimit);
+                            this.onCommandClick(command, columnIndex, defaultLimit, false, '');
                         }}
                         onPageClick={(offset) => {
                             this.onPageClick(offset, defaultLimit);
@@ -216,7 +240,7 @@ class SpreadSheet extends React.PureComponent<TableSampleProps, TableSampleState
                       result={this.state.result}
                       handleDialogExecution={(selectedOperator: AppliedOperator) => {
                         selectedOperator.operator &&
-                        this.onCommandClick(selectedOperator.operator, selectedOperator.columnIndex, defaultLimit);
+                        this.onCommandClick(selectedOperator.operator, selectedOperator.columnIndex, defaultLimit, selectedOperator.checked, selectedOperator.newColumnName);
                       }}
                       dialogStatus={this.state.recipeDialogStatus}
                       closeRecipeDialog={() => this.closeRecipeDialog()}

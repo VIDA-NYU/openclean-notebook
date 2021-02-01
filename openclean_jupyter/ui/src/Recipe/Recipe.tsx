@@ -1,22 +1,79 @@
 import * as React from 'react';
 import * as Icon from 'react-feather';
-import { OpProv } from '../types';
+import { OpProv, RequestResult } from '../types';
 import {Operator} from './../SpreadSheet';
+import Tabs from '@material-ui/core/Tabs';
+import Tab from '@material-ui/core/Tab';
+import Divider from '@material-ui/core/Divider';
+import Typography from '@material-ui/core/Typography';
+import Box from '@material-ui/core/Box';
+import { AddOperator, AppliedOperator } from './AddOperator';
+import Snackbar from '@material-ui/core/Snackbar';
+import IconButton from '@material-ui/core/IconButton';
+import CloseIcon from '@material-ui/icons/Close';
+interface TabPanelProps {
+  children?: React.ReactNode;
+  index: any;
+  value: any;
+}
+
+function TabPanel(props: TabPanelProps) {
+  const { children, value, index, ...other } = props;
+
+  return (
+    <div
+      role="tabpanel"
+      hidden={value !== index}
+      id={`scrollable-auto-tabpanel-${index}`}
+      aria-labelledby={`scrollable-auto-tab-${index}`}
+      {...other}
+    >
+      {value === index && (
+        <Box p={2}>
+          <Typography>{children}</Typography>
+        </Box>
+      )}
+    </div>
+  );
+}
+
 interface RecipeProps {
     operatorProvenance: OpProv[];
     openRecipeDialog: () => void;
     onRollback: (id: string) => void;
     onCommit: () => void;
+    result: RequestResult;
+    handleDialogExecution: (selectedOperator: AppliedOperator) => void;
+    closeRecipeDialog: () => void;
 }
 interface RecipeStates{
+  tabValue: number;
+  exportedTextsMessage: boolean;
 }
 class Recipe extends React.PureComponent<RecipeProps, RecipeStates> {
     constructor(props: RecipeProps) {
         super(props);
+        this.state = {
+          tabValue: 0,
+          exportedTextsMessage: false,
+        };
+        this.handleChange = this.handleChange.bind(this);
     }
     isCommited(){
       const list = this.props.operatorProvenance.map(operator => operator.isCommitted);
       return list.some((element) => element)
+    }
+    handleChange = (event: React.ChangeEvent<{}>, newValue: number) => {
+      console.log('hello tab');
+      console.log(newValue);
+      
+      this.setState({tabValue: newValue});
+    };
+    addOperator(selectedOperator: AppliedOperator) {
+      console.log('Adding new operator');
+      this.setState({tabValue: 0, exportedTextsMessage: true});
+      console.log('coling');
+      this.props.handleDialogExecution(selectedOperator);
     }
 
     render() {
@@ -46,15 +103,11 @@ class Recipe extends React.PureComponent<RecipeProps, RecipeStates> {
               >
                 Apply
               </button>
-              <button
-                type="button"
-                title="Add this operator"
-                className="btn-gray active"
-                style={{paddingTop:0, paddingBottom:0}}
-                onClick={() => this.props.openRecipeDialog()}
-              >
-                New
-              </button>
+              {/* <input
+                        type="text"
+                        name="search"
+                        placeholder={'Column Name'}
+                      /> */}
               <button
                 type="button"
                 title="Export recipe"
@@ -63,42 +116,89 @@ class Recipe extends React.PureComponent<RecipeProps, RecipeStates> {
                 // onClick={() => props.onClick && props.onClick()}
               >
                 Export
-              </button></div>
+              </button>
+              {/* <button
+                type="button"
+                title="Add this operator"
+                className="btn-gray active"
+                style={{paddingTop:0, paddingBottom:0}}
+                onClick={() => this.props.openRecipeDialog()}
+              >
+                New
+              </button> */}
+              </div>
+              
             </div>
-            <div style={{fontSize: 12, padding:4, height: 519, maxHeight: 519, overflow: 'auto'}}>
-              Applied operators:
-              <hr style={{marginTop: 6}}></hr>
-              {this.props.operatorProvenance.length >0 && this.props.operatorProvenance.map(operator => (
-                <div key={operator.id}>
-                <span className={`badge badge-pill`}>
-                  {operator.op.name}
-                  {!operator.isCommitted &&
-                    <button
-                      type="button"
-                      title="Remove this operator"
-                      className="btn btn-link badge-corner-button"
-                      onClick={() =>
-                        this.props.onRollback(
-                          operator.id
-                        )
-                      }
-                    >
-                      <Icon.XCircle size={13} />
-                    </button>
-                  }
-                </span>
-                <div>
-                <ul>
-                  {operator.op.name && <li>Operator: {operator.op.name}</li>}
-                  {operator.op.optype && <li>Type: {operator.op.optype} </li>}
-                  {operator.op.columns && <li>Column: {operator.op.columns && operator.op.columns[0]}</li>}
-                </ul>
-                </div>
-                <hr></hr>
-                </div>
-              ))
-              }
+            <div>
+            <Tabs
+              value={this.state.tabValue}
+              onChange={this.handleChange}
+              indicatorColor="primary"
+              textColor="primary"
+              // variant="scrollable"
+              // scrollButtons="auto"
+            >
+              <Tab label="Applied Operators" style={{marginLeft: '-25px' }}/>
+              <Tab label="Add Operator" style={{marginLeft: '-25px' }} />
+            </Tabs>
+            <Divider light={true} style={{color: 'gray', backgroundColor: 'lightgray'}}/>
+            <TabPanel value={this.state.tabValue} index={0}>
+              <div style={{fontSize: 12, padding:4, height: 519, maxHeight: 519, overflow: 'auto'}}>
+                {this.props.operatorProvenance.length >0 && this.props.operatorProvenance.map(operator => (
+                  <div key={operator.id}>
+                  <span className={`badge badge-pill`}>
+                    {operator.op.optype === 'load' &&
+                    'Load'
+                    }
+                    {operator.op.name}
+                    {!operator.isCommitted &&
+                      <button
+                        type="button"
+                        title="Remove this operator"
+                        className="btn btn-link badge-corner-button"
+                        onClick={() =>
+                          this.props.onRollback(
+                            operator.id
+                          )
+                        }
+                      >
+                        <Icon.XCircle size={13} />
+                      </button>
+                    }
+                  </span>
+                  <div>
+                  <ul>
+                    {operator.op.name && <li>Operator: {operator.op.name}</li>}
+                    {operator.op.optype && <li>Type: {operator.op.optype} </li>}
+                    {operator.op.columns && <li>Column: {operator.op.columns && operator.op.columns[0]}</li>}
+                  </ul>
+                  </div>
+                  <hr></hr>
+                  </div>
+                ))
+                }
+              </div>
+            </TabPanel>
+            <TabPanel value={this.state.tabValue} index={1}>
+              <AddOperator
+                      result={this.props.result}
+                      handleDialogExecution={(selectedOperator: AppliedOperator) => {
+                        this.addOperator(selectedOperator);
+                        // console.log('Adding new operator');
+                        // this.setState({tabValue: 0, exportedTextsMessage: true});
+                        // this.props.handleDialogExecution(selectedOperator);
+                      }}
+                      closeRecipeDialog={() => this.props.closeRecipeDialog()}
+                    />
+            </TabPanel>
             </div>
+            <Snackbar open={this.state.exportedTextsMessage} onClose={() => {this.setState({exportedTextsMessage: false})}}
+                message={"The new operator was successfully applied."}
+                autoHideDuration={6000}
+                action={<IconButton size="small" aria-label="close" color="inherit" onClick={() => this.setState({exportedTextsMessage: false})}>
+                  <CloseIcon fontSize="small" />
+                </IconButton>}
+      />
           </div>
         )
     }
