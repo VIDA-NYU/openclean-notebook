@@ -18,12 +18,8 @@ from typing import Dict, List, Optional, Tuple
 import os
 
 from openclean.engine.base import OpencleanEngine
-from openclean.engine.library.base import ObjectLibrary, DTYPE_FUNC
-from openclean.engine.library.func import FunctionSerializer
+from openclean.engine.library import ObjectLibrary
 from openclean.engine.registry import registry
-from openclean.engine.store.fs import FileSystemObjectStore
-from openclean.engine.store.mem import VolatileObjectRepository
-from openclean.engine.store.serialized import SerializedObjectRepository
 from openclean.util.core import unique_identifier
 
 
@@ -136,8 +132,9 @@ class OpencleanAPI(OpencleanEngine):
         list
         """
         functions = list()
-        for obj in self.library.functions():
-            functions.append(obj.get_object().to_descriptor())
+        for obj in self.library.functions().to_listing():
+            cobj = {o: obj[o] for o in obj if o is not 'description'}
+            functions.append(cobj)
         return {
             'functions': functions,
             'namespaces': [n.to_dict() for n in self.namespaces.values()]
@@ -178,19 +175,14 @@ def DB(
     # Create the engine components and the engine instance itself.
     if basedir is not None:
         histore = PersistentArchiveManager(basedir=basedir, create=create)
-        objects = SerializedObjectRepository(
-            store=FileSystemObjectStore(os.path.join(basedir, '.objects')),
-            serializers={DTYPE_FUNC: FunctionSerializer()}
-        )
         metadir = os.path.join(basedir, '.metadata')
     else:
         histore = VolatileArchiveManager()
-        objects = VolatileObjectRepository()
         metadir = None
     # Create object library and register three default string functions (for
     # demonstration purposes). At some point, the set of library functions that
     # is registered by default should be read from a configuration file.
-    library = ObjectLibrary(store=objects)
+    library = ObjectLibrary()
     library.eval(namespace='string')(str.lower)
     library.eval(namespace='string')(str.upper)
     library.eval(namespace='string')(str.capitalize)

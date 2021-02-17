@@ -15,7 +15,7 @@ import json
 import os
 import pytest
 
-from openclean.engine.library.parameter import Int
+from openclean.engine.object.function import Int
 
 from openclean_jupyter.controller.spreadsheet.base import spreadsheet_api
 from openclean_jupyter.engine import DB, Namespace

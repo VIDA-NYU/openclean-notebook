@@ -14,7 +14,7 @@ from typing import Dict, List, Tuple
 
 import pandas as pd
 
-from openclean.engine.data import DatasetHandle
+from openclean.engine.dataset import DatasetHandle
 from openclean.engine.registry import registry
 from openclean_jupyter.engine import OpencleanAPI
 from openclean_jupyter.metadata.datamart import DatamartProfiler
