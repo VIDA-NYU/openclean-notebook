@@ -10,9 +10,9 @@ import * as React from 'react';
 import CommAPI from './CommAPI';
 import { CommandRef, FunctionSpec, ProfilingResult, RequestResult, SpreadsheetData } from './types';
 import {DatasetSample} from './DatasetSample';
-import { RecipeDialog, AppliedOperator } from './Recipe/RecipeDialog';
+import { AppliedOperator } from './Recipe/RecipeDialog';
 import './SpreadSheet.css';
-import { Recipe } from './Recipe/Recipe';
+import Recipe from './Recipe/Recipe';
 
 interface TableSampleProps {
   data: string;
@@ -27,7 +27,6 @@ export interface Operator {
   name: string;
   column: string;
 }
-
 
 class SpreadSheet extends React.PureComponent<TableSampleProps, TableSampleState> {
     commSpreadsheetApi: CommAPI;
@@ -207,7 +206,9 @@ class SpreadSheet extends React.PureComponent<TableSampleProps, TableSampleState
     render() {
         const hit = this.getSpreadsheetData(this.state.result);
         const defaultLimit = 10;
+
         return (
+            <>
             <div className="mt-2">
                 <div className="d-flex flex-row">
                   {
@@ -236,19 +237,10 @@ class SpreadSheet extends React.PureComponent<TableSampleProps, TableSampleState
                         }}
                         pageSize={defaultLimit}
                     />
-                    <RecipeDialog
-                      result={this.state.result}
-                      handleDialogExecution={(selectedOperator: AppliedOperator) => {
-                        selectedOperator.operator &&
-                        this.onCommandClick(selectedOperator.operator, selectedOperator.columnIndex, defaultLimit, selectedOperator.checked, selectedOperator.newColumnName);
-                      }}
-                      dialogStatus={this.state.recipeDialogStatus}
-                      closeRecipeDialog={() => this.closeRecipeDialog()}
-                    />
                 </div>
             </div>
+            </>
         );
     }
 }
-
 export {SpreadSheet};

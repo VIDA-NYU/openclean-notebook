@@ -105,10 +105,12 @@ class AddOperator extends React.PureComponent <AddOperatorProps, AddOperatorStat
                       }
                     </Select>
                   </div>
+                  <div style={{marginTop:6}}>
                   <FormControlLabel
                       control={
                         <Switch
                           checked={this.state.selectedOperator.checked}
+                          size="small"
                           onChange={e => {this.handleChangeSwitch(e.target.name, e.target.checked)}}
                           name="checkedB"
                           color="primary"
@@ -125,13 +127,21 @@ class AddOperator extends React.PureComponent <AddOperatorProps, AddOperatorStat
                       //   value={this.state.selectedOperator.newColumnName}
                       //   onChange={event => this.handleChangeNewColumnName}
                       // />
-                      <TextField id="outlined-basic" value={this.state.selectedOperator.newColumnName} onChange={event => this.handleChangeNewColumnName(event)} label="Column name" variant="outlined"/>
+                      <TextField
+                        id="outlined-basic"
+                        size="small"
+                        value={this.state.selectedOperator.newColumnName}
+                        onChange={event => this.handleChangeNewColumnName(event)}
+                        label="Column name"
+                        variant="outlined"
+                      />
                     }
+                    </div>
                 </form>
               </div>
-              <div>
+              <div style={{marginTop: 3}}>
                 <Button onClick={() => this.props.closeRecipeDialog()} color="primary">
-                  Clear
+                  Cancel
                 </Button>
                 <Button onClick={() => this.props.handleDialogExecution(this.state.selectedOperator)} color="primary" autoFocus>
                   Apply

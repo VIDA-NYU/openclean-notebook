@@ -11,6 +11,17 @@ import { AddOperator, AppliedOperator } from './AddOperator';
 import Snackbar from '@material-ui/core/Snackbar';
 import IconButton from '@material-ui/core/IconButton';
 import CloseIcon from '@material-ui/icons/Close';
+import clsx from 'clsx';
+import { createStyles, Theme, withStyles, WithStyles } from '@material-ui/core/styles';
+import AddCircleOutline from '@material-ui/icons/AddCircleOutline';
+import Collapse from '@material-ui/core/Collapse';
+import Button from '@material-ui/core/Button';
+import Card from '@material-ui/core/Card';
+import CardHeader from '@material-ui/core/CardHeader';
+import CardContent from '@material-ui/core/CardContent';
+import CardActions from '@material-ui/core/CardActions';
+import { Statistics } from './Statistics';
+
 interface TabPanelProps {
   children?: React.ReactNode;
   index: any;
@@ -37,7 +48,30 @@ function TabPanel(props: TabPanelProps) {
   );
 }
 
-interface RecipeProps {
+const useStyles = (theme: Theme) => createStyles({
+  root: {
+    maxWidth: 345,
+  },
+  media: {
+    height: 0,
+    paddingTop: '56.25%', // 16:9
+  },
+  expand: {
+    transform: 'rotate(0deg)',
+    marginLeft: 'auto',
+    transition: theme.transitions.create('transform', {
+      duration: theme.transitions.duration.shortest,
+    }),
+  },
+  expandOpen: {
+    transform: 'rotate(180deg)',
+  },
+  button: {
+    margin: theme.spacing(0),
+  },
+});
+
+interface RecipeProps extends WithStyles<typeof useStyles>  {
     operatorProvenance: OpProv[];
     openRecipeDialog: () => void;
     onRollback: (id: string) => void;
@@ -49,6 +83,7 @@ interface RecipeProps {
 interface RecipeStates{
   tabValue: number;
   exportedTextsMessage: boolean;
+  expanded: boolean;
 }
 class Recipe extends React.PureComponent<RecipeProps, RecipeStates> {
     constructor(props: RecipeProps) {
@@ -56,6 +91,7 @@ class Recipe extends React.PureComponent<RecipeProps, RecipeStates> {
         this.state = {
           tabValue: 0,
           exportedTextsMessage: false,
+          expanded: false,
         };
         this.handleChange = this.handleChange.bind(this);
     }
@@ -71,14 +107,22 @@ class Recipe extends React.PureComponent<RecipeProps, RecipeStates> {
     };
     addOperator(selectedOperator: AppliedOperator) {
       console.log('Adding new operator');
-      this.setState({tabValue: 0, exportedTextsMessage: true});
+      this.setState({tabValue: 0, exportedTextsMessage: true, expanded: false});
       console.log('coling');
       this.props.handleDialogExecution(selectedOperator);
     }
+    handleExpandClick = () => {
+      this.setState({expanded: true});
+    };
+    handleCloseClick = () => {
+      this.setState({expanded: false});
+      this.props.closeRecipeDialog();
+    };
 
     render() {
+        const {classes} = this.props;
         return (
-            <div style={{flex: 'none', width: 250, marginRight:4,
+            <div style={{flex: 'none', width: 300, marginRight:0,
           borderStyle: 'solid', borderWidth:1, borderColor:'#63518b'}}>
             <div className='d-flex justify-content-between flex-row'
             style={{backgroundColor: '#63518b', padding:4, position: 'sticky',
@@ -139,13 +183,14 @@ class Recipe extends React.PureComponent<RecipeProps, RecipeStates> {
               // scrollButtons="auto"
             >
               <Tab label="Applied Operators" style={{marginLeft: '-25px' }}/>
-              <Tab label="Add Operator" style={{marginLeft: '-25px' }} />
+              <Tab label="Statistics" style={{marginLeft: '-25px' }} />
             </Tabs>
             <Divider light={true} style={{color: 'gray', backgroundColor: 'lightgray'}}/>
             <TabPanel value={this.state.tabValue} index={0}>
-              <div style={{fontSize: 12, padding:4, height: 519, maxHeight: 519, overflow: 'auto'}}>
+              <div style={{fontSize: 12, paddingRight:5, marginRight:'-14px', height: 519, maxHeight: 519, overflow: 'auto'}}>
                 {this.props.operatorProvenance.length >0 && this.props.operatorProvenance.map(operator => (
                   <div key={operator.id}>
+                    <div>
                   <span className={`badge badge-pill`}>
                     {operator.op.optype === 'load' &&
                     'Load'
@@ -163,9 +208,11 @@ class Recipe extends React.PureComponent<RecipeProps, RecipeStates> {
                         }
                       >
                         <Icon.XCircle size={13} />
-                      </button>
+                      </button> 
                     }
                   </span>
+                  <Icon.EyeOff size={13} style={{marginLeft: 4}}/>
+                  </div>
                   <div>
                   <ul>
                     {operator.op.name && <li>Operator: {operator.op.name}</li>}
@@ -177,19 +224,51 @@ class Recipe extends React.PureComponent<RecipeProps, RecipeStates> {
                   </div>
                 ))
                 }
-              </div>
-            </TabPanel>
-            <TabPanel value={this.state.tabValue} index={1}>
-              <AddOperator
+                {
+                  !this.state.expanded &&
+                  <div className="d-flex justify-content-center">
+                  <Button
+                  variant="contained"
+                  color="default"
+                  size="small"
+                  className={classes.button}
+                  style={{padding: 5, marginBottom: 5}}
+                  onClick={this.handleExpandClick}
+                  startIcon={<AddCircleOutline />}
+                >
+                  Add Operator
+                </Button>
+                </div>
+                }
+                <Collapse in={this.state.expanded} timeout="auto" unmountOnExit>
+                <Card className={classes.root} style={{backgroundColor: '#dcdcdc', marginRight: 6}}>
+                  <CardHeader
+                    title="Add a new operator"
+                  />
+                  <CardContent>
+                    <AddOperator
                       result={this.props.result}
                       handleDialogExecution={(selectedOperator: AppliedOperator) => {
                         this.addOperator(selectedOperator);
-                        // console.log('Adding new operator');
-                        // this.setState({tabValue: 0, exportedTextsMessage: true});
-                        // this.props.handleDialogExecution(selectedOperator);
                       }}
-                      closeRecipeDialog={() => this.props.closeRecipeDialog()}
+                      closeRecipeDialog={this.handleCloseClick}
                     />
+                  </CardContent>
+                  <CardActions disableSpacing>
+                  </CardActions>
+                </Card>
+                </Collapse>
+              </div>
+            </TabPanel>
+            <TabPanel value={this.state.tabValue} index={1}>
+              <Statistics
+                result={this.props.result}
+                handleDialogExecution={(selectedOperator: AppliedOperator) => {
+                  this.addOperator(selectedOperator);
+                }}
+                closeRecipeDialog={() => this.props.closeRecipeDialog()}
+                operatorProvenance={this.props.operatorProvenance}
+              />
             </TabPanel>
             </div>
             <Snackbar open={this.state.exportedTextsMessage} onClose={() => {this.setState({exportedTextsMessage: false})}}
@@ -203,5 +282,5 @@ class Recipe extends React.PureComponent<RecipeProps, RecipeStates> {
         )
     }
 }
-
-export {Recipe};
+export default withStyles(useStyles, { withTheme: true })(Recipe);
+// export {Recipe};
