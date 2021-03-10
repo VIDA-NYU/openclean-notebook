@@ -9,7 +9,6 @@
 identified by a unique name. Dataset snapshots are maintained by a datastore.
 """
 
-from dataclasses import dataclass
 from histore.archive.manager.base import ArchiveManager
 from histore.archive.manager.persist import PersistentArchiveManager
 from histore.archive.manager.mem import VolatileArchiveManager
@@ -18,40 +17,9 @@ from typing import Dict, List, Optional, Tuple
 import os
 
 from openclean.engine.base import OpencleanEngine
-from openclean.engine.library.base import ObjectLibrary, DTYPE_FUNC
-from openclean.engine.library.func import FunctionSerializer
+from openclean.engine.library import ObjectLibrary
 from openclean.engine.registry import registry
-from openclean.engine.store.fs import FileSystemObjectStore
-from openclean.engine.store.mem import VolatileObjectRepository
-from openclean.engine.store.serialized import SerializedObjectRepository
 from openclean.util.core import unique_identifier
-
-
-@dataclass
-class Namespace:
-    """Descriptor for namespaces that group functions in the object repository.
-    Namespaces are primarily used to group commands for display purposes. The
-    namespace class therefore contains a display label (short name) and a
-    descriptive help text for the group of commands it represents.
-    """
-    identifier: str
-    label: str
-    help: Optional[str] = None
-    sort_order: Optional[int] = 0
-
-    def to_dict(self) -> Dict:
-        """Get dictionary serialization for the namespace descriptor.
-
-        Returns
-        -------
-        dict
-        """
-        return {
-            'id': self.identifier,
-            'label': self.label,
-            'help': self.help,
-            'sortOrder': self.sort_order
-        }
 
 
 class OpencleanAPI(OpencleanEngine):
@@ -60,8 +28,7 @@ class OpencleanAPI(OpencleanEngine):
     """
     def __init__(
         self, identifier: str, manager: ArchiveManager, library: ObjectLibrary,
-        namespaces: Optional[List[Namespace]] = list(), basedir: Optional[str] = None,
-        cached: Optional[bool] = True
+        basedir: Optional[str] = None, cached: Optional[bool] = True
     ):
         """Initialize the engine identifier, the manager for created dataset
         archives, and the library for registered objects.
@@ -74,8 +41,6 @@ class OpencleanAPI(OpencleanEngine):
             Manager for created dataset archives.
         library: openclean.engine.library.base.ObjectLibrary
             Library manager for objects (e.g., registered functions).
-        namespaces: list of openclean_jupyter.engine.Namespace, default=list
-            List of namespace descriptors.
         basedir: string, default=None
             Path to directory on disk where archive metadata is maintained.
         cached: bool, default=True
@@ -89,10 +54,6 @@ class OpencleanAPI(OpencleanEngine):
             basedir=basedir,
             cached=cached
         )
-        # Convert the given list of namespaces into a directory.
-        self.namespaces = dict()
-        for ns in namespaces:
-            self.namespaces[ns.identifier] = ns
 
     def edit(
         self, name: str, n: Optional[int] = None,
@@ -140,7 +101,7 @@ class OpencleanAPI(OpencleanEngine):
             functions.append(obj.get_object().to_descriptor())
         return {
             'functions': functions,
-            'namespaces': [n.to_dict() for n in self.namespaces.values()]
+            'namespaces': [n.to_dict() for n in []]
         }
 
 
@@ -148,7 +109,7 @@ class OpencleanAPI(OpencleanEngine):
 
 def DB(
     basedir: Optional[str] = None, create: Optional[bool] = False,
-    namespaces: Optional[List[Namespace]] = None, cached: Optional[bool] = True
+    cached: Optional[bool] = True
 ) -> OpencleanAPI:
     """Create an instance of the openclean API for notebook environments.
 
@@ -159,8 +120,6 @@ def DB(
     create: bool, default=False
         Create a fresh instance of the archive manager if True. This will
         delete all files in the base directory.
-    namespaces: list of openclean_jupyter.engine.Namespace, default=None
-        List of namespace descriptors.
     cached: bool, default=True
         Flag indicating whether the all datastores that are created for
         existing archives are cached datastores or not.
@@ -178,44 +137,22 @@ def DB(
     # Create the engine components and the engine instance itself.
     if basedir is not None:
         histore = PersistentArchiveManager(basedir=basedir, create=create)
-        objects = SerializedObjectRepository(
-            store=FileSystemObjectStore(os.path.join(basedir, '.objects')),
-            serializers={DTYPE_FUNC: FunctionSerializer()}
-        )
         metadir = os.path.join(basedir, '.metadata')
     else:
         histore = VolatileArchiveManager()
-        objects = VolatileObjectRepository()
         metadir = None
     # Create object library and register three default string functions (for
     # demonstration purposes). At some point, the set of library functions that
     # is registered by default should be read from a configuration file.
-    library = ObjectLibrary(store=objects)
+    library = ObjectLibrary()
     library.eval(namespace='string')(str.lower)
     library.eval(namespace='string')(str.upper)
     library.eval(namespace='string')(str.capitalize)
-    # Add namespace for string functions if not present.
-    ns_string = Namespace(
-        identifier='string',
-        label='Text',
-        help='Collection of string operators'
-    )
-    if namespaces is not None:
-        found = False
-        for ns in namespaces:
-            if ns.identifier == ns_string.identifier:
-                found = True
-                break
-        if not found:
-            namespaces.append(ns_string)
-    else:
-        namespaces = [ns_string]
     # # Create and register the openclean API.
     engine = OpencleanAPI(
         identifier=engine_id,
         manager=histore,
         library=library,
-        namespaces=namespaces,
         basedir=metadir,
         cached=cached
     )
