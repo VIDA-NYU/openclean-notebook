@@ -113,6 +113,11 @@
                             "description": "Offset for first row in the response.",
                             "minimum": 0
                         },
+                        "version": {
+                            "type": "integer",
+                            "description": "Version identifier for requested snapshot.",
+                            "minimum": 0
+                        },
                         "includeMetadata": {
                             "type": "boolean",
                             "description": "Include profiling metadata in the response if true."

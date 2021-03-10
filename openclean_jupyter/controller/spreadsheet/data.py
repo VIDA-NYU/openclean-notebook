@@ -14,7 +14,7 @@ from typing import Dict, List, Tuple
 
 import pandas as pd
 
-from openclean.engine.data import DatasetHandle
+from openclean.engine.dataset import DatasetHandle
 from openclean.engine.registry import registry
 from openclean_jupyter.engine import OpencleanAPI
 from openclean_jupyter.metadata.datamart import DatamartProfiler
@@ -116,9 +116,9 @@ def fetch_metadata(df: pd.DataFrame, dataset: DatasetHandle) -> Dict:
     return {
         'profiling': metadataJSON,
         'log': [{
-            'id': e.identifier,
+            'id': e.version,
             'op': e.descriptor,
-            'isCommitted': e.is_committed
+            'isCommitted': False
         } for e in dataset.log()]
     }
 

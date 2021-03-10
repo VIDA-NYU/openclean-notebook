@@ -86,11 +86,11 @@ class AddOperator extends React.PureComponent <AddOperatorProps, AddOperatorStat
                       }}
                     >
                       {
-                      result.columns.map((colName, idx) => <MenuItem value={idx}>{colName}</MenuItem> )
+                      result.columns.map((colName, idx) => <MenuItem key={idx} value={idx}>{colName}</MenuItem> )
                       }
                     </Select>
                     </div>
-  
+
                     <div style={{marginTop:6}}>
                     <InputLabel htmlFor="max-width">Operator</InputLabel>
                     <Select
@@ -101,7 +101,7 @@ class AddOperator extends React.PureComponent <AddOperatorProps, AddOperatorStat
                       }}
                     >
                       {
-                      result.library && result.library.functions.map((lib, idx)=> <MenuItem value={idx}>{lib.name}</MenuItem> )
+                      result.library && result.library.functions.map((lib, idx)=> <MenuItem key={idx} value={idx}>{lib.name}</MenuItem> )
                       }
                     </Select>
                   </div>

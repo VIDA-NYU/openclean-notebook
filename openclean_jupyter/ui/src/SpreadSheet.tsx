@@ -72,9 +72,24 @@ class SpreadSheet extends React.PureComponent<TableSampleProps, TableSampleState
                 includeMetadata: true
             }
         });
+        this.fetchData = this.fetchData.bind(this);
         this.openRecipeDialog = this.openRecipeDialog.bind(this);
         this.closeRecipeDialog = this.closeRecipeDialog.bind(this);
         this.onRollback = this.onRollback.bind(this);
+    }
+
+    /*
+    * Fetch data for dataset snapshot with the given identfier.
+    */
+    fetchData(logEntryId: int, limit: number) {
+        this.commSpreadsheetApi.call({
+            dataset: this.props.data,
+            fetch: {
+                offset: 0,
+                limit: limit,
+                version: logEntryId
+            }
+        });
     }
 
     /*
@@ -115,38 +130,41 @@ class SpreadSheet extends React.PureComponent<TableSampleProps, TableSampleState
       this.setState({appliedOperators: temp, recipeDialogStatus: false});
 
       const commandRef: CommandRef = {name: command.name, namespace: command.namespace ? command.namespace : ''};
+      let payload = null;
       if (addColumn) {
-        this.commSpreadsheetApi.call({
-            dataset: this.props.data,
-            action: {
-                type: 'inscol',
-                payload: {
-                    names: [newColumnName],
-                    sources: [columnIndex],
-                    values: commandRef
-                }
-            },
-            fetch: {
-                offset: this.state.result.offset,
-                limit: limit
-            }
-        });
+          payload = {
+              dataset: this.props.data,
+              action: {
+                  type: 'inscol',
+                  payload: {
+                      names: [newColumnName],
+                      sources: [columnIndex],
+                      values: commandRef
+                  }
+              },
+              fetch: {
+                  offset: this.state.result.offset,
+                  limit: limit
+              }
+          };
+          this.commSpreadsheetApi.call(payload);
       } else {
-        this.commSpreadsheetApi.call({
-            dataset: this.props.data,
-            action: {
-                type: 'update',
-                payload: {
-                    columns: [columnIndex],
-                    func: commandRef
-                }
-            },
-            fetch: {
-                offset: this.state.result.offset,
-                limit: limit
-            }
-        });
+          payload = {
+              dataset: this.props.data,
+              action: {
+                  type: 'update',
+                  payload: {
+                      columns: [columnIndex],
+                      func: commandRef
+                  }
+              },
+              fetch: {
+                  offset: this.state.result.offset,
+                  limit: limit
+              }
+          };
       }
+      this.commSpreadsheetApi.call(payload);
     }
 
     /*
@@ -174,7 +192,8 @@ class SpreadSheet extends React.PureComponent<TableSampleProps, TableSampleState
             dataset: this.props.data,
             fetch: {
                 offset: offset,
-                limit: limit
+                limit: limit,
+                version: this.state.result.version
             }
         });
     }
@@ -189,7 +208,7 @@ class SpreadSheet extends React.PureComponent<TableSampleProps, TableSampleState
     /*
     * Rollback all changes to the log entry with the given identfier.
     */
-    onRollback(logEntryId: string, limit: number) {
+    onRollback(logEntryId: int, limit: number) {
         this.commSpreadsheetApi.call({
             dataset: this.props.data,
             action: {
@@ -214,16 +233,17 @@ class SpreadSheet extends React.PureComponent<TableSampleProps, TableSampleState
                   {
                     this.state.result.metadata &&
                     <Recipe
-                      operatorProvenance={this.state.result.metadata.log}
-                      openRecipeDialog={() => this.openRecipeDialog()}
-                      onRollback = {(id: string) => {this.onRollback(id, defaultLimit)}}
-                      onCommit = {() => this.onCommit(defaultLimit)}
-                      result={this.state.result}
-                      handleDialogExecution={(selectedOperator: AppliedOperator) => {
-                        selectedOperator.operator &&
-                        this.onCommandClick(selectedOperator.operator, selectedOperator.columnIndex, defaultLimit, selectedOperator.checked, selectedOperator.newColumnName);
-                      }}
-                      closeRecipeDialog={() => this.closeRecipeDialog()}
+                        fetchData = {(id: int) => {this.fetchData(id, defaultLimit)}}
+                        operatorProvenance={this.state.result.metadata.log}
+                        openRecipeDialog={() => this.openRecipeDialog()}
+                        onRollback = {(id: int) => {this.onRollback(id, defaultLimit)}}
+                        onCommit = {() => this.onCommit(defaultLimit)}
+                        result={this.state.result}
+                        handleDialogExecution={(selectedOperator: AppliedOperator) => {
+                          selectedOperator.operator &&
+                            this.onCommandClick(selectedOperator.operator, selectedOperator.columnIndex, defaultLimit, selectedOperator.checked, selectedOperator.newColumnName);
+                        }}
+                        closeRecipeDialog={() => this.closeRecipeDialog()}
                     />
                   }
                     <DatasetSample

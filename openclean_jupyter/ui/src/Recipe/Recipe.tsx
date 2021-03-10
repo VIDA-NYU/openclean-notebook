@@ -41,7 +41,7 @@ function TabPanel(props: TabPanelProps) {
     >
       {value === index && (
         <Box p={2}>
-          <Typography>{children}</Typography>
+          {children}
         </Box>
       )}
     </div>
@@ -68,13 +68,14 @@ const useStyles = (theme: Theme) => createStyles({
   },
   button: {
     margin: theme.spacing(0),
-  },
+  }
 });
 
 interface RecipeProps extends WithStyles<typeof useStyles>  {
+    fetchData: (id: int) => void;
     operatorProvenance: OpProv[];
     openRecipeDialog: () => void;
-    onRollback: (id: string) => void;
+    onRollback: (id: int) => void;
     onCommit: () => void;
     result: RequestResult;
     handleDialogExecution: (selectedOperator: AppliedOperator) => void;
@@ -102,14 +103,14 @@ class Recipe extends React.PureComponent<RecipeProps, RecipeStates> {
     handleChange = (event: React.ChangeEvent<{}>, newValue: number) => {
       console.log('hello tab');
       console.log(newValue);
-      
+
       this.setState({tabValue: newValue});
     };
-    addOperator(selectedOperator: AppliedOperator) {
-      console.log('Adding new operator');
-      this.setState({tabValue: 0, exportedTextsMessage: true, expanded: false});
-      console.log('coling');
-      this.props.handleDialogExecution(selectedOperator);
+    addOperator = (selectedOperator: AppliedOperator) => {
+        console.log('Adding new operator');
+        console.log(selectedOperator);
+        this.setState({tabValue: 0, exportedTextsMessage: true, expanded: false});
+        this.props.handleDialogExecution(selectedOperator);
     }
     handleExpandClick = () => {
       this.setState({expanded: true});
@@ -121,6 +122,14 @@ class Recipe extends React.PureComponent<RecipeProps, RecipeStates> {
 
     render() {
         const {classes} = this.props;
+        // Get the version number for the operator for which the resulting
+        // data is currently shown in the spreadsheet from the attribute
+        // props.result.version. If the value is null the last version is
+        // being shown.
+        let versionShown = this.props.result.version;
+        if (versionShown == null) {
+            versionShown = this.props.operatorProvenance[this.props.operatorProvenance.length - 1].id;
+        }
         return (
             <div style={{flex: 'none', width: 300, marginRight:0,
           borderStyle: 'solid', borderWidth:1, borderColor:'#63518b'}}>
@@ -171,7 +180,7 @@ class Recipe extends React.PureComponent<RecipeProps, RecipeStates> {
                 New
               </button> */}
               </div>
-              
+
             </div>
             <div>
             <Tabs
@@ -189,41 +198,41 @@ class Recipe extends React.PureComponent<RecipeProps, RecipeStates> {
             <TabPanel value={this.state.tabValue} index={0}>
               <div style={{fontSize: 12, paddingRight:5, marginRight:'-14px', height: 519, maxHeight: 519, overflow: 'auto'}}>
                 {this.props.operatorProvenance.length >0 && this.props.operatorProvenance.map(operator => (
-                  <div key={operator.id}>
-                    <div>
-                  <span className={`badge badge-pill`}>
-                    {operator.op.optype === 'load' &&
-                    'Load'
-                    }
-                    {operator.op.name}
-                    {!operator.isCommitted &&
-                      <button
-                        type="button"
-                        title="Remove this operator"
-                        className="btn btn-link badge-corner-button"
-                        onClick={() =>
-                          this.props.onRollback(
-                            operator.id
-                          )
-                        }
-                      >
-                        <Icon.XCircle size={13} />
-                      </button> 
-                    }
-                  </span>
-                  <Icon.EyeOff size={13} style={{marginLeft: 4}}/>
-                  </div>
-                  <div>
-                  <ul>
-                    {operator.op.name && <li>Operator: {operator.op.name}</li>}
-                    {operator.op.optype && <li>Type: {operator.op.optype} </li>}
-                    {operator.op.columns && <li>Column: {operator.op.columns && operator.op.columns[0]}</li>}
-                  </ul>
-                  </div>
-                  <hr></hr>
-                  </div>
-                ))
-                }
+                    <div key={operator.id} style={operator.id !== versionShown ? {background: '#fff'} :  {background: '#e8f9fc'}}>
+                        <div>
+                            <span className={`badge badge-pill`}>
+                                {(operator.op.optype === 'load' || operator.op.optype === 'sample') && 'Load'}
+                                {operator.op.name}
+                                <button
+                                    type="button"
+                                    title="Remove this operator"
+                                    className="btn btn-link badge-corner-button"
+                                    onClick={() => this.props.onRollback(operator.id)}
+                                >
+                                    <Icon.XCircle size={13} />
+                                </button>
+                            </span>
+                            {operator.id !== versionShown &&
+                                <button
+                                    type="button"
+                                    title="Remove this operator"
+                                    className="btn btn-link"
+                                    onClick={() => this.props.fetchData(operator.id)}
+                                >
+                                    <Icon.Eye size={13} style={{marginLeft: 4}}/>
+                                </button>
+                            }
+                        </div>
+                        <div>
+                            <ul style={{listStyleType: "none", paddingLeft: 5, marginTop: 5}}>
+                                {operator.op.name && <li><b>Operator</b>: {operator.op.name}</li>}
+                                {operator.op.optype && <li><b>Type</b>: {operator.op.optype} </li>}
+                                {operator.op.columns && <li><b>Column</b>: {operator.op.columns && operator.op.columns[0]}</li>}
+                            </ul>
+                        </div>
+                        <hr></hr>
+                    </div>
+                ))}
                 {
                   !this.state.expanded &&
                   <div className="d-flex justify-content-center">

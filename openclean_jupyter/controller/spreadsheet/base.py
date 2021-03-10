@@ -169,10 +169,13 @@ def spreadsheet_api(request: Dict) -> Dict:
     fetch = request['fetch']
     limit = fetch.get('limit', DEFAULT_LIMIT)
     offset = fetch.get('offset', 0)
+    version = fetch.get('version')
     include_metadata = fetch.get('includeMetadata', action is not None)
     include_library = fetch.get('includeLibrary', False)
-    # Load the latest snapshot of the referenced dataset.
-    df = dataset.checkout()
+    # Load the requested snapshot of the referenced dataset. If a version number
+    # was included in the request we load the data for that version. Otherwise,
+    # the data for the latest snapshot is loaded.
+    df = dataset.checkout(version=version)
     # Create basic response document.
     row_count = df.shape[0]
     doc = {
@@ -184,7 +187,8 @@ def spreadsheet_api(request: Dict) -> Dict:
                 end=min(offset + limit, row_count)
             ),
             'offset': offset,
-            'rowCount': row_count
+            'rowCount': row_count,
+            'version': version
         }
     # Add metadata to response if the include_metadata flag is True.
     if include_metadata:
@@ -217,7 +221,8 @@ def get_eval(engine: OpencleanAPI, func: Any, args: List[Dict]) -> Tuple[Any, Di
     if isinstance(func, dict):
         # If the specification is a dictionary we assume that it is the
         # serialization of a functin handle identifier.
-        f = engine.library.get(name=func['name'], namespace=func.get('namespace'))
+        namespace = func.get('namespace') if func.get('namespace') else None
+        f = engine.library.functions().get(name=func['name'], namespace=namespace)
         # Convert arguments into a dictionary.
         func_args = None
         if args is not None:

@@ -96,13 +96,7 @@ class OpencleanAPI(OpencleanEngine):
         -------
         list
         """
-        functions = list()
-        for obj in self.library.functions():
-            functions.append(obj.get_object().to_descriptor())
-        return {
-            'functions': functions,
-            'namespaces': [n.to_dict() for n in []]
-        }
+        return {'functions': self.library.functions().to_listing()}
 
 
 # -- Engine factory -----------------------------------------------------------
