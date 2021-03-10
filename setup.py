@@ -15,11 +15,8 @@ from setuptools import setup, find_packages
 
 install_requires = [
     'future',
-    'dill',
     'jsonschema==3.2.0',
-    'openclean-core==0.1.0',
-    'histore==0.2.2',
-    'flowserv-core==0.6.0',
+    'openclean-core>=0.1.0',
     'datamart-profiler==0.8.1'
 ]
 
