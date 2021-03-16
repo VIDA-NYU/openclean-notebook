@@ -72,10 +72,10 @@ const useStyles = (theme: Theme) => createStyles({
 });
 
 interface RecipeProps extends WithStyles<typeof useStyles>  {
-    fetchData: (id: int) => void;
+    fetchData: (id: number) => void;
     operatorProvenance: OpProv[];
     openRecipeDialog: () => void;
-    onRollback: (id: int) => void;
+    onRollback: (id: number) => void;
     onCommit: () => void;
     result: RequestResult;
     handleDialogExecution: (selectedOperator: AppliedOperator) => void;
@@ -201,13 +201,13 @@ class Recipe extends React.PureComponent<RecipeProps, RecipeStates> {
                     <div key={operator.id} style={operator.id !== versionShown ? {background: '#fff'} :  {background: '#e8f9fc'}}>
                         <div>
                             <span className={`badge badge-pill`}>
-                                {(operator.op.optype === 'load' || operator.op.optype === 'sample') && 'Load'}
+                                 {operator.op.optype === 'load' && 'Load'} {/*|| operator.op.optype === 'sample') && 'Load'} */}
                                 {operator.op.name}
                                 <button
                                     type="button"
                                     title="Remove this operator"
                                     className="btn btn-link badge-corner-button"
-                                    onClick={() => this.props.onRollback(operator.id)}
+                                    onClick={() => this.props.onRollback(parseInt(operator.id))}
                                 >
                                     <Icon.XCircle size={13} />
                                 </button>
@@ -217,7 +217,7 @@ class Recipe extends React.PureComponent<RecipeProps, RecipeStates> {
                                     type="button"
                                     title="Remove this operator"
                                     className="btn btn-link"
-                                    onClick={() => this.props.fetchData(operator.id)}
+                                    onClick={() => this.props.fetchData(parseInt(operator.id))}
                                 >
                                     <Icon.Eye size={13} style={{marginLeft: 4}}/>
                                 </button>

@@ -58,6 +58,7 @@ class SpreadSheet extends React.PureComponent<TableSampleProps, TableSampleState
                 rows: [],
                 // library: [],
                 // metadata: {}
+                version: null,
             },
             appliedOperators: [],
             recipeDialogStatus: false,
@@ -81,7 +82,7 @@ class SpreadSheet extends React.PureComponent<TableSampleProps, TableSampleState
     /*
     * Fetch data for dataset snapshot with the given identfier.
     */
-    fetchData(logEntryId: int, limit: number) {
+    fetchData(logEntryId: number, limit: number) {
         this.commSpreadsheetApi.call({
             dataset: this.props.data,
             fetch: {
@@ -208,7 +209,7 @@ class SpreadSheet extends React.PureComponent<TableSampleProps, TableSampleState
     /*
     * Rollback all changes to the log entry with the given identfier.
     */
-    onRollback(logEntryId: int, limit: number) {
+    onRollback(logEntryId: number, limit: number) {
         this.commSpreadsheetApi.call({
             dataset: this.props.data,
             action: {
@@ -233,10 +234,10 @@ class SpreadSheet extends React.PureComponent<TableSampleProps, TableSampleState
                   {
                     this.state.result.metadata &&
                     <Recipe
-                        fetchData = {(id: int) => {this.fetchData(id, defaultLimit)}}
+                        fetchData = {(id: number) => {this.fetchData(id, defaultLimit)}}
                         operatorProvenance={this.state.result.metadata.log}
                         openRecipeDialog={() => this.openRecipeDialog()}
-                        onRollback = {(id: int) => {this.onRollback(id, defaultLimit)}}
+                        onRollback = {(id: number) => {this.onRollback(id, defaultLimit)}}
                         onCommit = {() => this.onCommit(defaultLimit)}
                         result={this.state.result}
                         handleDialogExecution={(selectedOperator: AppliedOperator) => {

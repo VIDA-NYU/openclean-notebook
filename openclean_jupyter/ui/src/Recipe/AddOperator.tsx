@@ -120,18 +120,11 @@ class AddOperator extends React.PureComponent <AddOperatorProps, AddOperatorStat
                     />
                     {
                       this.state.selectedOperator.checked &&
-                      // <input
-                      //   type="text"
-                      //   name="search"
-                      //   placeholder={'Column Name'}
-                      //   value={this.state.selectedOperator.newColumnName}
-                      //   onChange={event => this.handleChangeNewColumnName}
-                      // />
                       <TextField
                         id="outlined-basic"
                         size="small"
                         value={this.state.selectedOperator.newColumnName}
-                        onChange={event => this.handleChangeNewColumnName(event)}
+                        onChange={(event:React.ChangeEvent<HTMLInputElement>)  => this.handleChangeNewColumnName(event)}
                         label="Column name"
                         variant="outlined"
                       />

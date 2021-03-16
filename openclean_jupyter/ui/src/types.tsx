@@ -18,6 +18,7 @@ export interface RequestResult {
   rows: Row[];
   metadata?: Metadata;
   library?: Library;
+  version: string | null;
 }
 
 // -- Dataset -----------------------------------------------------------------
