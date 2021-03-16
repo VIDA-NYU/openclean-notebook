@@ -7,7 +7,7 @@
 
 """Unit tests for the datamart profiler."""
 
-from openclean_jupyter.metadata.datamart import DatamartProfiler
+from openclean_notebook.metadata.datamart import DatamartProfiler
 
 
 def test_profile_dataset(dataset):

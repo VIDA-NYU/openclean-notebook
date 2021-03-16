@@ -11,9 +11,9 @@ from jsonschema.exceptions import ValidationError
 
 import pytest
 
-from openclean_jupyter.controller.spreadsheet.base import validator
+from openclean_notebook.controller.spreadsheet.base import validator
 
-import openclean_jupyter.controller.spreadsheet.data as ds
+import openclean_notebook.controller.spreadsheet.data as ds
 
 
 @pytest.mark.parametrize(

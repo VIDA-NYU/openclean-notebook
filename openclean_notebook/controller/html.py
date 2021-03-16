@@ -36,7 +36,7 @@ def make_html(template: str, library: str, data: Dict) -> str:
     ----------
     template: string
         Name of the HTML template. This is the path name to a file relative
-        to the openclean_jupyter/ui/templates folder.
+        to the openclean_notebook/ui/templates folder.
     package: string
         Name of a Javascript package file (build bundle) that contains the
         script that is being embedded into the returned HTML string.
@@ -64,9 +64,9 @@ def make_html(template: str, library: str, data: Dict) -> str:
 
 
 def readfile(filename: str) -> str:
-    """Read a file that is contained in the openclean_jupyter package. This is
+    """Read a file that is contained in the openclean_notebook package. This is
     a helper method to read Javascript files and HTML templates that are part
-    of the openclean_jupyter package.
+    of the openclean_notebook package.
 
     Returns a string containing the file contents.
 

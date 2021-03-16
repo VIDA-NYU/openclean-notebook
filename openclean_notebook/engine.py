@@ -86,7 +86,7 @@ class OpencleanAPI(OpencleanEngine):
             self.sample(name=name, n=n, random_state=random_state)
         # Embed the spreadsheet view into the notebook. Import the spreadsheet
         # embedder here to avoid cyclic dependencies.
-        from openclean_jupyter.controller.spreadsheet.base import spreadsheet
+        from openclean_notebook.controller.spreadsheet.base import spreadsheet
         spreadsheet(name=name, engine=self.identifier)
 
     def library_dict(self) -> Dict:
@@ -120,7 +120,7 @@ def DB(
 
     Returns
     -------
-    openclean_jupyter.engine.OpencleanAPI
+    openclean_notebook.engine.OpencleanAPI
     """
     # Create a unique identifier to register the created engine in the
     # global registry dictionary. Use an 8-character key here. Make sure to

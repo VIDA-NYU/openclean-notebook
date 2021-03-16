@@ -16,8 +16,8 @@ import pandas as pd
 
 from openclean.engine.dataset import DatasetHandle
 from openclean.engine.registry import registry
-from openclean_jupyter.engine import OpencleanAPI
-from openclean_jupyter.metadata.datamart import DatamartProfiler
+from openclean_notebook.engine import OpencleanAPI
+from openclean_notebook.metadata.datamart import DatamartProfiler
 
 
 # -- Dataset locator (de)serialization ----------------------------------------
@@ -37,7 +37,7 @@ def deserialize(doc: Dict) -> Tuple[DatasetHandle, OpencleanAPI]:
 
     Returns
     -------
-    tuple of openclean.engine.data.DatasetHandle, openclean_jupyter.engine.OpencleanAPI
+    tuple of openclean.engine.data.DatasetHandle, openclean_notebook.engine.OpencleanAPI
 
     Raises
     ------

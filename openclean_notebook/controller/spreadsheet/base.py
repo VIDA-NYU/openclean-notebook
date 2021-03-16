@@ -16,11 +16,11 @@ import json
 import os
 
 
-from openclean_jupyter.controller.comm import register_handler
-from openclean_jupyter.controller.html import make_html
-from openclean_jupyter.engine import OpencleanAPI
+from openclean_notebook.controller.comm import register_handler
+from openclean_notebook.controller.html import make_html
+from openclean_notebook.engine import OpencleanAPI
 
-import openclean_jupyter.controller.spreadsheet.data as ds
+import openclean_notebook.controller.spreadsheet.data as ds
 
 
 """Create schema validator for API requests."""
@@ -207,7 +207,7 @@ def get_eval(engine: OpencleanAPI, func: Any, args: List[Dict]) -> Tuple[Any, Di
 
     Parameters
     ----------
-    engine: openclean_jupyter.engine.OpencleanAPI
+    engine: openclean_notebook.engine.OpencleanAPI
         Engine that contains the library of registered functions.
     func: any
         Specification for an evaluation function (dict) or constant scalar

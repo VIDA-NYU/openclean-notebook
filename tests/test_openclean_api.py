@@ -7,7 +7,7 @@
 
 """Unit tests for the openclean API extensions of the openclean engine."""
 
-from openclean_jupyter.engine import DB
+from openclean_notebook.engine import DB
 
 
 def test_edit_dataset(dataset, tmpdir):

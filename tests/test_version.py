@@ -10,5 +10,5 @@
 
 def test_package_version():
     """Unit test to access the package code version identifier (for completeness)."""
-    from openclean_jupyter.version import __version__
+    from openclean_notebook.version import __version__
     assert __version__ is not None
