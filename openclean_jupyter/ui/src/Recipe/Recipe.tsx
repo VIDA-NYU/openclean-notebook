@@ -198,10 +198,10 @@ class Recipe extends React.PureComponent<RecipeProps, RecipeStates> {
             <TabPanel value={this.state.tabValue} index={0}>
               <div style={{fontSize: 12, paddingRight:5, marginRight:'-14px', height: 519, maxHeight: 519, overflow: 'auto'}}>
                 {this.props.operatorProvenance.length >0 && this.props.operatorProvenance.map(operator => (
-                    <div key={operator.id} style={operator.id !== versionShown ? {background: '#fff'} :  {background: '#e8f9fc'}}>
+                    <div key={operator.id} style={operator.id !== versionShown ? {background: '#fff'} :  {background: '#f5f4fa'}}>
                         <div>
                             <span className={`badge badge-pill`}>
-                                 {operator.op.optype === 'load' && 'Load'} {/*|| operator.op.optype === 'sample') && 'Load'} */}
+                                 {(operator.op.optype === 'load' || operator.op.optype === 'sample') && 'Load'}
                                 {operator.op.name}
                                 <button
                                     type="button"
@@ -215,7 +215,7 @@ class Recipe extends React.PureComponent<RecipeProps, RecipeStates> {
                             {operator.id !== versionShown &&
                                 <button
                                     type="button"
-                                    title="Remove this operator"
+                                    title="See current dataset"
                                     className="btn btn-link"
                                     onClick={() => this.props.fetchData(parseInt(operator.id))}
                                 >

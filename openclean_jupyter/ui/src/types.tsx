@@ -184,6 +184,7 @@ enum OpType {
     OP_INSCOL = 'inscol',
     OP_LOAD = 'load',
     OP_UPDATE = 'update',
+    OP_SAMPLE = 'sample',
 }
 
 // -- Vega Plots Data ---------------------------------------------------------
