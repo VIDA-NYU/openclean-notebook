@@ -227,6 +227,7 @@ class Recipe extends React.PureComponent<RecipeProps, RecipeStates> {
                                     className="btn btn-link"
                                     onClick={() => this.props.fetchData(parseInt(operator.id))}
                                 >
+                                  View
                                     <Icon.Eye size={13} style={{marginLeft: 4}}/>
                                 </button>
                             }
