@@ -7,7 +7,7 @@
 
 """Unit tests for the openclean API extensions of the openclean engine."""
 
-from openclean_jupyter.engine import DB, Namespace
+from openclean_jupyter.engine import DB
 
 
 def test_edit_dataset(dataset, tmpdir):
@@ -16,21 +16,3 @@ def test_edit_dataset(dataset, tmpdir):
     engine.create(source=dataset, name='DS', primary_key='A')
     engine.edit('DS')
     engine.edit('DS', n=1)
-
-
-def test_init_namespaces():
-    """Test initialize the set of namespace descriptors."""
-    # -- Default has one namespace for string functions --
-    namespaces = DB().namespaces
-    assert len(namespaces) == 1
-    assert set([n.label for n in namespaces.values()]) == set(['Text'])
-    # -- The text namespace is added if not in initial set --
-    ns = Namespace(identifier='numbers', label='Num')
-    namespaces = DB(namespaces=[ns]).namespaces
-    assert len(namespaces) == 2
-    assert set([n.label for n in namespaces.values()]) == set(['Num', 'Text'])
-    # -- If a string namespace is given it will not be replaced ---
-    ns = Namespace(identifier='string', label='Num')
-    namespaces = DB(namespaces=[ns]).namespaces
-    assert len(namespaces) == 1
-    assert set([n.label for n in namespaces.values()]) == set(['Num'])

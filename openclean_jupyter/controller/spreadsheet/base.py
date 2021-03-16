@@ -134,7 +134,7 @@ def spreadsheet_api(request: Dict) -> Dict:
         action_type = action['type']
         payload = action.get('payload')
         if action_type == 'commit':
-            dataset.commit()
+            dataset.apply()
         elif action_type == 'inscol':
             values, args = get_eval(
                 engine=engine,
