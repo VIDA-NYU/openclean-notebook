@@ -1,19 +1,19 @@
 import * as React from 'react';
 import * as Icon from 'react-feather';
 import { OpProv, RequestResult } from '../types';
-import {Operator} from './../SpreadSheet';
 import Tabs from '@material-ui/core/Tabs';
 import Tab from '@material-ui/core/Tab';
 import Divider from '@material-ui/core/Divider';
-import Typography from '@material-ui/core/Typography';
 import Box from '@material-ui/core/Box';
 import { AddOperator, AppliedOperator } from './AddOperator';
 import Snackbar from '@material-ui/core/Snackbar';
 import IconButton from '@material-ui/core/IconButton';
 import CloseIcon from '@material-ui/icons/Close';
-import clsx from 'clsx';
 import { createStyles, Theme, withStyles, WithStyles } from '@material-ui/core/styles';
 import AddCircleOutline from '@material-ui/icons/AddCircleOutline';
+import History from '@material-ui/icons/History';
+import Visibility from '@material-ui/icons/Visibility';
+// import VisibilityOutlinedIcon from '@material-ui/icons/VisibilityOutlined';
 import Collapse from '@material-ui/core/Collapse';
 import Button from '@material-ui/core/Button';
 import Card from '@material-ui/core/Card';
@@ -211,24 +211,29 @@ class Recipe extends React.PureComponent<RecipeProps, RecipeStates> {
                             <span className={`badge badge-pill`}>
                                  {(operator.op.optype === 'load' || operator.op.optype === 'sample') && 'Load'}
                                 {operator.op.name}
-                                <button
-                                    type="button"
-                                    title="Remove this operator"
-                                    className="btn btn-link badge-corner-button"
-                                    onClick={() => this.props.onRollback(parseInt(operator.id))}
-                                >
-                                    <Icon.XCircle size={13} />
-                                </button>
                             </span>
+                            {!operator.isCommitted &&
+                            <button
+                                    type="button"
+                                    title="Rollback all changes"
+                                    className="btn btn-link"
+                                    onClick={() => this.props.onRollback(parseInt(operator.id))}
+                                    style={{ fontSize: 10}}
+                                >
+                                  <History fontSize="small" style={{marginBottom: '-2px', marginRight:1}}/>
+                                    Rollback
+                                </button>
+                            }
                             {operator.id !== versionShown &&
                                 <button
                                     type="button"
                                     title="See current dataset"
                                     className="btn btn-link"
+                                    style={{ fontSize: 10}}
                                     onClick={() => this.props.fetchData(parseInt(operator.id))}
                                 >
-                                  View
-                                    <Icon.Eye size={13} style={{marginLeft: 4}}/>
+                                  <Visibility fontSize="small" style={{marginBottom: '-2px', marginRight:1}}/>
+                                    View
                                 </button>
                             }
                         </div>
