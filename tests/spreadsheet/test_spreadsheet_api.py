@@ -15,10 +15,10 @@ import json
 import os
 import pytest
 
-from openclean.engine.library.parameter import Int
+from openclean.engine.object.function import Int
 
 from openclean_jupyter.controller.spreadsheet.base import spreadsheet_api
-from openclean_jupyter.engine import DB, Namespace
+from openclean_jupyter.engine import DB
 
 import openclean_jupyter.controller.spreadsheet as pkg
 import openclean_jupyter.controller.spreadsheet.data as ds
@@ -46,7 +46,7 @@ def add_one_or_some(n: int, value: Optional[int] = 1):
 @pytest.fixture
 def engine(dataset):
     """Create an instance of the openclean API."""
-    engine = DB(namespaces=[Namespace(identifier='mylib', label='My Lib')])
+    engine = DB()
     para = Int('value', default=1)
     engine.register.eval('myadd', namespace='mylib', parameters=[para])(add_one_or_some)
     engine.create(source=dataset, name=DS_NAME, primary_key='A')
@@ -171,17 +171,12 @@ def test_rollback_and_commit(engine, validator):
     assert len(doc['rows']) == 2
     log = doc['metadata']['log']
     assert len(log) == 3
-    assert log[0]['isCommitted']
-    assert not log[1]['isCommitted']
-    assert not log[2]['isCommitted']
     values = [r['values'][2] for r in doc['rows']]
     # -- Rollback the last operation --
-    action = {'type': 'rollback', 'payload': log[2]['id']}
+    action = {'type': 'rollback', 'payload': log[1]['id']}
     doc = spreadsheet_api(request(handle, fetch={}, action=action))
     log = doc['metadata']['log']
     assert len(log) == 2
-    assert log[0]['isCommitted']
-    assert not log[1]['isCommitted']
     assert values == [r['values'][2] + 1 for r in doc['rows']]
     # -- Commit remaining changes to full dataset --
     action = {'type': 'commit'}
@@ -190,8 +185,6 @@ def test_rollback_and_commit(engine, validator):
     assert [r['values'][0] for r in doc['rows']] == [5, 5]
     log = doc['metadata']['log']
     assert len(log) == 2
-    assert log[0]['isCommitted']
-    assert log[1]['isCommitted']
     # -- Checkout the full dataset --
     df = engine.checkout(name=DS_NAME)
     assert list(df.columns) == ['D', 'A', 'B', 'C']

@@ -69,7 +69,7 @@ ARGS = [{'name': 'a', 'value': 1}, {'name': 'b', 'value': ['A', 'B']}]
         {'type': 'commit'},
         {'type': 'inscol', 'payload': {'names': ['A']}},
         {'type': 'inscol', 'payload': {'names': ['A'], 'values': [1], 'args': ARGS, 'sources': [2]}},
-        {'type': 'rollback', 'payload': '0000'},
+        {'type': 'rollback', 'payload': 0},
         {'type': 'update', 'payload': {'columns': [1, 2], 'func': {'name': 'upper'}}},
         {'type': 'update', 'payload': {'columns': [1, 2], 'func': {'name': 'upper'}, 'args': ARGS, 'sources': [2]}}
     ]

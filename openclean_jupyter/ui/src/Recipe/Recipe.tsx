@@ -122,13 +122,16 @@ class Recipe extends React.PureComponent<RecipeProps, RecipeStates> {
 
     render() {
         const {classes} = this.props;
+        // Get identifier for the last version. For this operator, no rollback
+        // option is shown.
+        const lastVersion = this.props.operatorProvenance[this.props.operatorProvenance.length - 1].id
         // Get the version number for the operator for which the resulting
         // data is currently shown in the spreadsheet from the attribute
         // props.result.version. If the value is null the last version is
         // being shown.
         let versionShown = this.props.result.version;
         if (versionShown == null) {
-            versionShown = this.props.operatorProvenance[this.props.operatorProvenance.length - 1].id;
+            versionShown = lastVersion;
         }
         return (
             <div style={{flex: 'none', width: 300, marginRight:0,
@@ -212,7 +215,7 @@ class Recipe extends React.PureComponent<RecipeProps, RecipeStates> {
                                  {(operator.op.optype === 'load' || operator.op.optype === 'sample') && 'Load'}
                                 {operator.op.name}
                             </span>
-                            {!operator.isCommitted &&
+                            {!operator.isCommitted && operator.id !== lastVersion &&
                             <button
                                     type="button"
                                     title="Rollback all changes"

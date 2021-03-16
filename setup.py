@@ -35,6 +35,7 @@ extras_require = {
         'sphinx-rtd-theme'
     ],
     'tests': tests_require,
+    'jupyter': ['jupyter']
 }
 
 

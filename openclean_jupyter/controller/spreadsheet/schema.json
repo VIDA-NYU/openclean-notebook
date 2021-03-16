@@ -32,7 +32,7 @@
             "description": "Rollback all uncommitted operations to a given version.",
             "properties": {
                 "type": {"const": "rollback"},
-                "payload": {"type": "string"}
+                "payload": {"type": "integer"}
             },
             "required": ["type", "payload"]
         },
@@ -114,9 +114,14 @@
                             "minimum": 0
                         },
                         "version": {
-                            "type": "integer",
                             "description": "Version identifier for requested snapshot.",
-                            "minimum": 0
+                            "anyOf": [
+                                {
+                                    "type": "integer",
+                                    "minimum": 0
+                                },
+                                {"type": "null"}
+                            ]
                         },
                         "includeMetadata": {
                             "type": "boolean",
