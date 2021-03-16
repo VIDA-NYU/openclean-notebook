@@ -198,7 +198,15 @@ class Recipe extends React.PureComponent<RecipeProps, RecipeStates> {
             <TabPanel value={this.state.tabValue} index={0}>
               <div style={{fontSize: 12, paddingRight:5, marginRight:'-14px', height: 519, maxHeight: 519, overflow: 'auto'}}>
                 {this.props.operatorProvenance.length >0 && this.props.operatorProvenance.map(operator => (
-                    <div key={operator.id} style={operator.id !== versionShown ? {background: '#fff'} :  {background: '#f5f4fa'}}>
+                  <>
+                    <div
+                      key={operator.id}
+                      className="card shadow-sm d-flex flex-row"
+                      style={{
+                        background: operator.id !== versionShown ? '#fff' : '#f5f4fa',
+                      }}
+                    >
+                      <div className="card-body d-flex flex-column" style={{minWidth: 250}}>
                         <div>
                             <span className={`badge badge-pill`}>
                                  {(operator.op.optype === 'load' || operator.op.optype === 'sample') && 'Load'}
@@ -230,8 +238,19 @@ class Recipe extends React.PureComponent<RecipeProps, RecipeStates> {
                                 {operator.op.columns && <li><b>Column</b>: {operator.op.columns && operator.op.columns[0]}</li>}
                             </ul>
                         </div>
-                        <hr></hr>
+                      </div>
+                      <div
+                        className="d-flex align-items-stretch"
+                        style={{cursor: 'pointer'}}
+                        onClick={() => this.props.fetchData(parseInt(operator.id))}
+                      >
+                        <div style={{margin: 'auto 3px'}}>
+                          <Icon.ChevronRight className="feather feather-lg" />
+                        </div>
+                      </div>
                     </div>
+                    <hr></hr>
+                    </>
                 ))}
                 {
                   !this.state.expanded &&
