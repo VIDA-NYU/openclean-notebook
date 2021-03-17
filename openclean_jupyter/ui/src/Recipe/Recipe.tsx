@@ -178,12 +178,13 @@ class Recipe extends React.PureComponent<RecipeProps, RecipeStates> {
               </div>
 
             </div>
-            <div style={{borderStyle: 'solid', borderWidth:1, borderColor:'#D3D3D3'}}>
+            <div style={{borderStyle: 'solid', borderWidth:1, borderColor:'#D3D3D3', color: '#63518b'}}>
             <Tabs
               value={this.state.tabValue}
               onChange={this.handleChange}
               indicatorColor="primary"
-              textColor="primary"
+              textColor="inherit"
+              TabIndicatorProps={{style: {backgroundColor:'#63518b'}}}
               // variant="scrollable"
               // scrollButtons="auto"
             >
@@ -192,7 +193,7 @@ class Recipe extends React.PureComponent<RecipeProps, RecipeStates> {
             </Tabs>
             <Divider light={true} style={{color: 'gray', backgroundColor: 'lightgray'}}/>
             <TabPanel value={this.state.tabValue} index={0}>
-              <div style={{fontSize: 12, paddingRight:5, marginTop: '-11px', marginRight:'-14px', height: 542, maxHeight: 542, overflow: 'auto'}}>
+              <div style={{fontSize: 12, paddingRight:5, marginTop: 0, marginRight:'-14px', height: 542, maxHeight: 542, overflow: 'auto'}}>
                 {this.props.operatorProvenance.length >0 && this.props.operatorProvenance.map(operator => (
                   <>
                     <div
@@ -214,9 +215,9 @@ class Recipe extends React.PureComponent<RecipeProps, RecipeStates> {
                                     title="Rollback all changes"
                                     className="btn btn-link"
                                     onClick={() => this.props.onRollback(parseInt(operator.id))}
-                                    style={{ fontSize: 10}}
+                                    style={{ fontSize: 10, color: '#63518b'}}
                                 >
-                                  <History fontSize="small" style={{marginBottom: '-2px', marginRight:1}}/>
+                                  <History fontSize="small" style={{color: '#63518b', marginBottom: '-2px', marginRight:1}}/>
                                     Rollback
                                 </button>
                             }
@@ -225,15 +226,15 @@ class Recipe extends React.PureComponent<RecipeProps, RecipeStates> {
                                     type="button"
                                     title="See current dataset"
                                     className="btn btn-link"
-                                    style={{ fontSize: 10}}
+                                    style={{ fontSize: 10, color: '#63518b'}}
                                     onClick={() => this.props.fetchData(parseInt(operator.id))}
                                 >
-                                  <Visibility fontSize="small" style={{marginBottom: '-2px', marginRight:1}}/>
+                                  <Visibility fontSize="small" style={{color: '#63518b', marginBottom: '-2px', marginRight:1}}/>
                                     View
                                 </button>
                             }
                         </div>
-                        <div>
+                        <div style={{color: '#777777'}}>
                             <ul style={{listStyleType: "none", paddingLeft: 5, marginTop: 5}}>
                                 {operator.op.name && <li><b>Operator</b>: {operator.op.name}</li>}
                                 {operator.op.optype && <li><b>Type</b>: {operator.op.optype} </li>}
