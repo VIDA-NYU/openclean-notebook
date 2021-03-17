@@ -8,7 +8,7 @@
 Welcome to openclean's Metanome Wrapper Documentation!
 ======================================================
 
-This package is an extension for the `openclean-core package <https://github.com/VIDA-NYU/openclean-core>`_. It provides access to data profiling algorithms from the `Metanome project <https://github.com/HPI-Information-Systems/Metanome>`_ in **openclean**. The algorithms themselves are executable via the `Metanome Wrapper <https://github.com/VIDA-NYU/openclean-metanome-algorithms>`_ that enables to run Metanome algorithms via the command line.
+This package provides a graphical user interface for **openclean** to be used in notebook environments like Jupyter Notebooks. For a brief overview please have a look at the `example notebook <https://github.com/VIDA-NYU/openclean-notebook/blob/master/examples/notebooks/Openclean%20Goes%20Jupyter%20-%20Example.ipynb>`_ that shows how to register and run commands.
 
 
 ..  toctree::

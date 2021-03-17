@@ -41,35 +41,35 @@ def spreadsheet_api(request: Dict) -> Dict:
     dictionary that adheres to the following schema (see `schema.json` for the
     full Json Schema definition):
 
-    ```
-    request:
-        type: object
-        properties:
-          action:
-            oneOf:
-            - $ref: '#/definitions/actionCommit'
-            - $ref: '#/definitions/actionInsert'
-            - $ref: '#/definitions/actionRollback'
-            - $ref: '#/definitions/actionUpdate'
-          dataset:
-            $ref: '#/definitions/datasetRef'
-          fetch:
-            properties:
-              includeLibrary:
-                type: boolean
-              includeMetadata:
-                type: boolean
-              limit:
-                minimum: 1
-                type: integer
-              offset:
-                minimum: 0
-                type: integer
+    .. code-block:: yaml
+
+        request:
             type: object
-        required:
-        - dataset
-        - fetch
-    ```
+            properties:
+              action:
+                oneOf:
+                - $ref: '#/definitions/actionCommit'
+                - $ref: '#/definitions/actionInsert'
+                - $ref: '#/definitions/actionRollback'
+                - $ref: '#/definitions/actionUpdate'
+              dataset:
+                $ref: '#/definitions/datasetRef'
+              fetch:
+                properties:
+                  includeLibrary:
+                    type: boolean
+                  includeMetadata:
+                    type: boolean
+                  limit:
+                    minimum: 1
+                    type: integer
+                  offset:
+                    minimum: 0
+                    type: integer
+                type: object
+            required:
+            - dataset
+            - fetch
 
     Each request contains at least (i) the reference to the dataset that is being
     displayed in the spreadsheet view and (ii) the query parameters that determine
