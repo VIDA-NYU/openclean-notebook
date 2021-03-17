@@ -234,7 +234,7 @@ class Recipe extends React.PureComponent<RecipeProps, RecipeStates> {
                                 </button>
                             }
                         </div>
-                        <div style={{color: '#777777'}}>
+                        <div style={{color: '#5e5e5e'}}>
                             <ul style={{listStyleType: "none", paddingLeft: 5, marginTop: 5}}>
                                 {operator.op.name && <li><b>Operator</b>: {operator.op.name}</li>}
                                 {operator.op.optype && <li><b>Type</b>: {operator.op.optype} </li>}

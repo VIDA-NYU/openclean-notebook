@@ -157,7 +157,7 @@ class Statistics extends React.PureComponent <StatisticsProps, StatisticsState> 
         }
         
         return (
-            <div style={{fontSize:12, color: '#777777'}}>
+            <div style={{fontSize:12, color: '#5e5e5e'}}>
                 <div style={{marginBottom: 25}}>
                 <p><b>Updated columns </b></p>
                 <VegaLite
