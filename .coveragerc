@@ -1,7 +1,7 @@
 [run]
 branch = true
 parallel = true
-source = openclean_jupyter
+source = openclean_notebook
 
 [report]
 show_missing = true
