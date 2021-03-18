@@ -157,23 +157,23 @@ class Statistics extends React.PureComponent <StatisticsProps, StatisticsState> 
         }
         
         return (
-            <div>
+            <div style={{fontSize:12, color: '#5e5e5e'}}>
                 <div style={{marginBottom: 25}}>
-                <p><b>Updated columns: </b></p>
+                <p><b>Updated columns </b></p>
                 <VegaLite
                     spec={getSpecification("histogram_text")}
                     data={{values: dataformarted_columnOp}}
                 />
                 </div>
                 <div style={{marginBottom: 25}}>
-                <p><b>Operators: </b></p>
+                <p><b>Operators </b></p>
                 <VegaLite
                     spec={getSpecification("histogram_text")}
                     data={{values: dataformarted_operatorOp}}
                 />
                 </div>
                 <div style={{marginBottom: 25}}>
-                <p><b>Operator Types: </b></p>
+                <p><b>Operator Types </b></p>
                 <VegaLite
                     spec={getSpecification("histogram_text")}
                     data={{values: dataformarted_typesOp}}

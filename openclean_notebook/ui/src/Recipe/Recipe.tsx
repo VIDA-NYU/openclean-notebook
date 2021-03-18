@@ -13,6 +13,8 @@ import { createStyles, Theme, withStyles, WithStyles } from '@material-ui/core/s
 import AddCircleOutline from '@material-ui/icons/AddCircleOutline';
 import History from '@material-ui/icons/History';
 import Visibility from '@material-ui/icons/Visibility';
+import PlayArrow from '@material-ui/icons/PlayArrow';
+import GetAppIcon from '@material-ui/icons/GetApp';
 // import VisibilityOutlinedIcon from '@material-ui/icons/VisibilityOutlined';
 import Collapse from '@material-ui/core/Collapse';
 import Button from '@material-ui/core/Button';
@@ -134,12 +136,10 @@ class Recipe extends React.PureComponent<RecipeProps, RecipeStates> {
             versionShown = lastVersion;
         }
         return (
-            <div style={{flex: 'none', width: 300, marginRight:0,
-          borderStyle: 'solid', borderWidth:1, borderColor:'#63518b'}}>
+            <div style={{flex: 'none', width: 300, marginRight:0}}>
             <div className='d-flex justify-content-between flex-row'
             style={{backgroundColor: '#63518b', padding:4, position: 'sticky',
-            top: '-1px',
-            zIndex: 1}}
+            top: '-1px', zIndex: 1, borderStyle: 'solid', borderWidth:1, borderColor:'#63518b'}}
             >
               <div style={{color: 'white', fontSize:14, fontWeight:'bold'}}> Recipe </div>
               <div
@@ -149,48 +149,42 @@ class Recipe extends React.PureComponent<RecipeProps, RecipeStates> {
                     style={{
                       float: 'initial', fontSize: 12}}
                   >
-              <button
-                type="button"
+              <Button
+                variant="contained"
+                color="default"
+                size="small"
                 title="Apply changes to the full dataset"
-                className="btn-gray active"
-                style={{paddingTop:0, paddingBottom:0}}
+                className={classes.button}
+                style={{padding: 1, marginRight: 5}}
                 onClick={() => this.props.onCommit()}
+                startIcon={<PlayArrow fontSize="small" style={{marginRight: '-3px'}} />}
                 disabled={this.isCommited()}
               >
                 Apply
-              </button>
-              {/* <input
-                        type="text"
-                        name="search"
-                        placeholder={'Column Name'}
-                      /> */}
-              <button
-                type="button"
+              </Button>
+              <Button
+                variant="contained"
+                color="default"
+                size="small"
                 title="Export recipe"
-                className="btn-gray active"
-                style={{paddingTop:0, paddingBottom:0}}
-                // onClick={() => props.onClick && props.onClick()}
+                className={classes.button}
+                style={{padding:1, marginRight: 2}}
+                onClick={() => this.props.openRecipeDialog()}
+                startIcon={<GetAppIcon fontSize="small" style={{marginRight: '-3px'}} />}
+                disabled={this.isCommited()}
               >
                 Export
-              </button>
-              {/* <button
-                type="button"
-                title="Add this operator"
-                className="btn-gray active"
-                style={{paddingTop:0, paddingBottom:0}}
-                onClick={() => this.props.openRecipeDialog()}
-              >
-                New
-              </button> */}
+              </Button>
               </div>
 
             </div>
-            <div>
+            <div style={{borderStyle: 'solid', borderWidth:1, borderColor:'#D3D3D3', color: '#63518b'}}>
             <Tabs
               value={this.state.tabValue}
               onChange={this.handleChange}
               indicatorColor="primary"
-              textColor="primary"
+              textColor="inherit"
+              TabIndicatorProps={{style: {backgroundColor:'#63518b'}}}
               // variant="scrollable"
               // scrollButtons="auto"
             >
@@ -199,7 +193,7 @@ class Recipe extends React.PureComponent<RecipeProps, RecipeStates> {
             </Tabs>
             <Divider light={true} style={{color: 'gray', backgroundColor: 'lightgray'}}/>
             <TabPanel value={this.state.tabValue} index={0}>
-              <div style={{fontSize: 12, paddingRight:5, marginRight:'-14px', height: 519, maxHeight: 519, overflow: 'auto'}}>
+              <div style={{fontSize: 12, paddingRight:5, marginTop: 0, marginRight:'-14px', height: 542, maxHeight: 542, overflow: 'auto'}}>
                 {this.props.operatorProvenance.length >0 && this.props.operatorProvenance.map(operator => (
                   <>
                     <div
@@ -221,9 +215,9 @@ class Recipe extends React.PureComponent<RecipeProps, RecipeStates> {
                                     title="Rollback all changes"
                                     className="btn btn-link"
                                     onClick={() => this.props.onRollback(parseInt(operator.id))}
-                                    style={{ fontSize: 10}}
+                                    style={{ fontSize: 10, color: '#63518b'}}
                                 >
-                                  <History fontSize="small" style={{marginBottom: '-2px', marginRight:1}}/>
+                                  <History fontSize="small" style={{color: '#63518b', marginBottom: '-2px', marginRight:1}}/>
                                     Rollback
                                 </button>
                             }
@@ -232,15 +226,15 @@ class Recipe extends React.PureComponent<RecipeProps, RecipeStates> {
                                     type="button"
                                     title="See current dataset"
                                     className="btn btn-link"
-                                    style={{ fontSize: 10}}
+                                    style={{ fontSize: 10, color: '#63518b'}}
                                     onClick={() => this.props.fetchData(parseInt(operator.id))}
                                 >
-                                  <Visibility fontSize="small" style={{marginBottom: '-2px', marginRight:1}}/>
+                                  <Visibility fontSize="small" style={{color: '#63518b', marginBottom: '-2px', marginRight:1}}/>
                                     View
                                 </button>
                             }
                         </div>
-                        <div>
+                        <div style={{color: '#5e5e5e'}}>
                             <ul style={{listStyleType: "none", paddingLeft: 5, marginTop: 5}}>
                                 {operator.op.name && <li><b>Operator</b>: {operator.op.name}</li>}
                                 {operator.op.optype && <li><b>Type</b>: {operator.op.optype} </li>}

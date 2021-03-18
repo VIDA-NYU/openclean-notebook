@@ -200,7 +200,7 @@ function TableColumnView(props: {
       {props.headerGroups &&
       props.headerGroups[0].headers.map((column, i) => {
         const columnStatistics = (
-          <td style={{minWidth: 400}}>
+          <td style={{minWidth: 400, textAlign: 'left'}}>
             <ul style={{listStyle: 'none', columnCount: 2, columnGap: 10}}>
               {props.hit.metadata.columns[i].num_distinct_values && (
                 <li>Unique Values</li>
@@ -221,10 +221,10 @@ function TableColumnView(props: {
         );
         return (
           <tr {...column.getHeaderProps()}>
-            <td>
+            <td style={{textAlign: 'left'}}>
               <b>{column.render('Header')} </b>
             </td>
-            <td>
+            <td style={{textAlign: 'left'}}>
               <TypeBadges column={props.hit.metadata.columns[i]} />
             </td>
             <VegaPlot
@@ -267,6 +267,7 @@ function TableCompactDetailView(props: {
                   background: '#eee',
                   zIndex: 1,
                   width: 200,
+                  textAlign: 'left',
                 }}
               >
                 {column.render('Header')}
@@ -299,14 +300,20 @@ function TableCompactDetailView(props: {
         ))}
         {typeView === tableViews.DETAIL &&
           headerGroups.map((headerGroup, i) => (
-            <tr {...headerGroup.getHeaderGroupProps()}>
+            <tr {...headerGroup.getHeaderGroupProps()} style={{textAlign: 'left'}}>
               {headerGroup.headers.map((column, i) => (
+                <th
+                style={{
+                  textAlign: 'left',
+                }}
+              >
                 <VegaPlot
                   key={`headerPlot_${i}`}
                   columnMetadata={hit.metadata.columns[i]}
                   column={column}
                   isHeader={true}
                 />
+              </th>
               ))}
             </tr>
           ))}
@@ -317,7 +324,7 @@ function TableCompactDetailView(props: {
           return (
             <tr {...row.getRowProps()}>
               {row.cells.map(cell => {
-                return <td {...cell.getCellProps()}>{cell.render('Cell')}</td>;
+                return <td {...cell.getCellProps()} style={{textAlign: 'left'}}>{cell.render('Cell')}</td>;
               })}
             </tr>
           );
