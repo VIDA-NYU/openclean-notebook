@@ -1,6 +1,6 @@
 # This file is part of the Data Cleaning Library (openclean).
 #
-# Copyright (C) 2018-2020 New York University.
+# Copyright (c) 2018-2021 New York University.
 #
 # openclean is released under the Revised BSD License. See file LICENSE for
 # full license details.
@@ -11,9 +11,9 @@ from jsonschema.exceptions import ValidationError
 
 import pytest
 
-from openclean_jupyter.controller.spreadsheet.base import validator
+from openclean_notebook.controller.spreadsheet.base import validator
 
-import openclean_jupyter.controller.spreadsheet.data as ds
+import openclean_notebook.controller.spreadsheet.data as ds
 
 
 @pytest.mark.parametrize(

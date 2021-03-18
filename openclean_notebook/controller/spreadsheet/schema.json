@@ -1,0 +1,314 @@
+{
+    "definitions": {
+        "actionCommit": {
+            "type": "object",
+            "description": "Apply all uncommitted operations on the full dataset.",
+            "properties": {
+                "type": {"const": "commit"}
+            },
+            "required": ["type"]
+        },
+        "actionInsert": {
+            "type": "object",
+            "description": "Insert column(s) into the dataset.",
+            "properties": {
+                "type": {"const": "inscol"},
+                "payload": {
+                    "type": "object",
+                    "properties": {
+                        "names": {"type": "array", "description": "Names for inserted columns", "items": {"type": "string"}},
+                        "pos": {"type": "integer", "description": "Optional position argument for insert operations"},
+                        "values": {"$ref": "#/definitions/valueFunction"},
+                        "args": {"$ref": "#/definitions/evalArgs"},
+                        "sources": {"$ref": "#/definitions/sourceColumns"}
+                    },
+                    "required": ["names"]
+                }
+            },
+            "required": ["type", "payload"]
+        },
+        "actionRollback": {
+            "type": "object",
+            "description": "Rollback all uncommitted operations to a given version.",
+            "properties": {
+                "type": {"const": "rollback"},
+                "payload": {"type": "integer"}
+            },
+            "required": ["type", "payload"]
+        },
+        "actionUpdate": {
+            "type": "object",
+            "description": "Update column(s) in the dataset.",
+            "properties": {
+                "type": {"const": "update"},
+                "payload": {
+                    "type": "object",
+                    "properties": {
+                        "columns": {
+                            "type": "array",
+                            "description": "Index positions for columns that are targets (and potentially sources) for the evaluation function",
+                            "items": {"type": "integer"}
+                        },
+                        "func": {"$ref": "#/definitions/valueFunction"},
+                        "args": {"$ref": "#/definitions/evalArgs"},
+                        "sources": {"$ref": "#/definitions/sourceColumns"}
+                    },
+                    "required": ["columns", "func"]
+                }
+            },
+            "required": ["type", "payload"]
+        },
+        "datasetRef": {
+            "type": "object",
+            "description": "Identifier for the dataset in the spreadsheet view.",
+            "properties": {
+                "database": {
+                    "type": "string",
+                    "description": "Identifier of the database engine."
+                },
+                "name": {
+                    "type": "string",
+                    "description": "Unique dataset name."
+                }
+            },
+            "required": ["database", "name"]
+        },
+        "evalArgs": {
+            "type": "array",
+            "description": "List of key-value pairs for additional function arguments",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "name": {"type": "string", "description": "Unique argument name"},
+                    "value": {}
+                },
+                "required": ["name"]
+            }
+        },
+        "request": {
+            "type": "object",
+            "description": "General structure for requests that are handled by the spreadsheet API",
+            "properties": {
+                "dataset": {"$ref": "#/definitions/datasetRef"},
+                "action": {
+                    "description": "Optional action that is being executed before returning rows for the (modified) dataset.",
+                    "oneOf": [
+                        {"$ref": "#/definitions/actionCommit"},
+                        {"$ref": "#/definitions/actionInsert"},
+                        {"$ref": "#/definitions/actionRollback"},
+                        {"$ref": "#/definitions/actionUpdate"}
+                    ]
+                },
+                "fetch": {
+                    "type": "object",
+                    "description": "Query parameter that define the data to be included in the response.",
+                    "properties": {
+                        "limit": {
+                            "type": "integer",
+                            "description": "Maximum number of rows in the response.",
+                            "minimum": 1
+                        },
+                        "offset": {
+                            "type": "integer",
+                            "description": "Offset for first row in the response.",
+                            "minimum": 0
+                        },
+                        "version": {
+                            "description": "Version identifier for requested snapshot.",
+                            "anyOf": [
+                                {
+                                    "type": "integer",
+                                    "minimum": 0
+                                },
+                                {"type": "null"}
+                            ]
+                        },
+                        "includeMetadata": {
+                            "type": "boolean",
+                            "description": "Include profiling metadata in the response if true."
+                        },
+                        "includeLibrary": {
+                            "type": "boolean",
+                            "description": "Include serialization of registered commands."
+                        }
+                    }
+                }
+            },
+            "required": ["dataset", "fetch"]
+        },
+        "response": {
+            "type": "object",
+            "description": "General structure for responses that are send by the spreadsheet API",
+            "properties": {
+                "dataset": {"$ref": "#/definitions/datasetRef"},
+                "columns": {
+                    "type": "array",
+                    "description": "List of columns names in the dataset schema",
+                    "items": {"type": "string"}
+                },
+                "rows": {
+                    "type": "array",
+                    "description": "List of dataset rows",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "id": {"type": "integer", "description": "Unique row identifier"},
+                            "values": {
+                                "type": "array",
+                                "description": "Row cell values",
+                                "items": {
+                                    "oneOf": [
+                                        {"type": "number"},
+                                        {"type": "string"}
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                },
+                "offset": {
+                    "type": "integer",
+                    "description": "Offset for first row in the response",
+                    "minimum": 0
+                },
+                "rowCount": {
+                    "type": "integer",
+                    "description": "Total number of rows in the dataset",
+                    "minimum": 0
+                },
+                "metadata": {
+                    "type": "object",
+                    "description": "Profiling results and operation log",
+                    "properties": {
+                        "profiling": {"type": "object"},
+                        "log": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "id": {"type": "string"},
+                                    "op": {
+                                        "type": "object",
+                                        "properties": {
+                                            "optype": {
+                                                "type": "string",
+                                                "enum": ["inscol", "load", "update"]
+                                            },
+                                            "name": {"type": "string"},
+                                            "namespace": {"type": "string"},
+                                            "columns": {"type": "array", "items": {"type": "string"}},
+                                            "sources": {"type": "array", "items": {"type": "string"}},
+                                            "pos": {"type": "number"},
+                                            "value": {},
+                                            "parameters": {
+                                                "type": "array",
+                                                "items": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "name": {"type": "string"},
+                                                        "value": {"type": "string"}
+                                                    },
+                                                    "required": ["name", "value"]
+                                                }
+                                            }
+                                        },
+                                        "required": ["optype"]
+                                    },
+                                    "isCommitted": {"type": "boolean"}
+                                },
+                                "required": ["id", "op", "isCommitted"]
+                            }
+                        }
+                    },
+                    "required": ["profiling", "log"]
+                },
+                "library": {
+                    "type": "object",
+                    "properties": {
+                        "functions": {
+                            "type": "array",
+                            "description": "List of registered functions",
+                            "iterms": {
+                                "type": "object",
+                                "properties": {
+                                    "name": {"type": "string"},
+                                    "namespace": {"type": "string"},
+                                    "label": {"type": "string"},
+                                    "help": {"type": "string"},
+                                    "columns": {"type": "integer"},
+                                    "outputs": {"type": "integer"},
+                                    "parameters": {
+                                        "type": "object",
+                                        "properties": {
+                                            "dtype": {"type": "string"},
+                                            "name": {"type": "string"},
+                                            "index": {"type": "integer"},
+                                            "label": {"type": "string"},
+                                            "help": {"type": "string"},
+                                            "defaultValue": {},
+                                            "isRequired": {"type": "boolean"},
+                                            "group": {"type": "string"}
+                                        },
+                                        "required": ["dtype", "name"]
+                                    }
+                                },
+                                "required": ["name"]
+                            }
+                        },
+                        "namespaces": {
+                            "type": "array",
+                            "description": "List of namespace descriptors",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "id": {"type": "string"},
+                                    "label": {"type": "string"},
+                                    "help": {"type": "string"},
+                                    "sortOrder": {"type": "integer"}
+                                },
+                                "required": ["name", "label"]
+                            }
+                        }
+                    }
+                }
+            },
+            "required": ["dataset", "columns", "rows", "rowCount", "offset"]
+        },
+        "sourceColumns": {
+            "type": "array",
+            "description": "List of index positions for alternative input columns",
+            "items": {"type": "integer"}
+        },
+        "valueFunction": {
+            "description": "Value generator for update and insert operations.",
+            "oneOf": [
+                {
+                    "type": "object",
+                    "description": "Evaluation function",
+                    "properties": {
+                        "name": {
+                            "type": "string",
+                            "description": "Unique name for registered evaluation function"
+                        },
+                        "namespace": {
+                            "type": "string",
+                            "description": "Optional namespace identifier"
+                        },
+                        "required": ["name"]
+                    }
+                },
+                {
+                    "type": "array",
+                    "description": "Scalar value types for aconstant evaluation function.",
+                    "items": {
+                        "oneOf": [
+                            {"type": "number"},
+                            {"type": "string"},
+                            {"type": "boolean"}
+                        ]
+                    }
+                }
+            ]
+        }
+    }
+}

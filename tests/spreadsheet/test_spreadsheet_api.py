@@ -1,6 +1,6 @@
 # This file is part of the Data Cleaning Library (openclean).
 #
-# Copyright (C) 2018-2020 New York University.
+# Copyright (c) 2018-2021 New York University.
 #
 # openclean is released under the Revised BSD License. See file LICENSE for
 # full license details.
@@ -17,11 +17,11 @@ import pytest
 
 from openclean.engine.object.function import Int
 
-from openclean_jupyter.controller.spreadsheet.base import spreadsheet_api
-from openclean_jupyter.engine import DB
+from openclean_notebook.controller.spreadsheet.base import spreadsheet_api
+from openclean_notebook.engine import DB
 
-import openclean_jupyter.controller.spreadsheet as pkg
-import openclean_jupyter.controller.spreadsheet.data as ds
+import openclean_notebook.controller.spreadsheet as pkg
+import openclean_notebook.controller.spreadsheet.data as ds
 
 
 # -- Helper functions ---------------------------------------------------------
