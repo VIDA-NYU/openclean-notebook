@@ -2,6 +2,12 @@
 openclean Notebook Environment - User Interface
 ===============================================
 
+.. image:: https://img.shields.io/pypi/pyversions/openclean-notebook.svg
+    :target: https://pypi.org/pypi/openclean-notebook
+
+.. image:: https://badge.fury.io/py/openclean-notebook.svg
+    :target: https://badge.fury.io/py/openclean-notebook
+
 .. image:: https://img.shields.io/badge/License-BSD-green.svg
     :target: https://github.com/VIDA-NYU/openclean-notebook/blob/master/LICENSE
 
