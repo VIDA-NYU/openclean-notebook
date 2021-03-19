@@ -7,6 +7,7 @@
 
 include LICENSE
 include *.rst
+include openclean_notebook/ui/build/*
 recursive-include openclean_notebook *.py *.json
 prune docs/_build
 recursive-include docs *.py
