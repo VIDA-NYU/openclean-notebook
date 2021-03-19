@@ -10,8 +10,8 @@ include *.rst
 include openclean_notebook/controller/spreadsheet/schema.json
 include openclean_notebook/ui/build/*
 recursive-include openclean_notebook *.py
-prune docs/_build
-prune openclean_notebook/ui/node_modules
 recursive-include docs *.py
 recursive-include docs *.rst
 global-exclude *.py[co]
+prune docs/_build
+prune openclean_notebook/ui/node_modules
