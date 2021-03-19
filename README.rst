@@ -5,6 +5,16 @@ openclean Notebook Environment - User Interface
 .. image:: https://img.shields.io/badge/License-BSD-green.svg
     :target: https://github.com/VIDA-NYU/openclean-notebook/blob/master/LICENSE
 
+.. image:: https://github.com/VIDA-NYU/openclean-notebook/actions/workflows/build.yml/badge.svg
+    :target: https://github.com/VIDA-NYU/openclean-notebook/actions/workflows/build.yml
+
+.. image:: https://readthedocs.org/projects/openclean-notebook/badge/?version=latest
+    :target: https://openclean-notebook.readthedocs.io/en/latest/?badge=latest
+    :alt: Documentation Status
+
+.. image:: https://codecov.io/gh/VIDA-NYU/openclean-notebook/branch/master/graph/badge.svg?token=7YRZIGOR1J
+    :target: https://codecov.io/gh/VIDA-NYU/openclean-notebook
+
 
 .. figure:: https://github.com/VIDA-NYU/openclean-notebook/blob/master/docs/graphics/logo.png
     :align: center
