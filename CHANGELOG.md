@@ -9,3 +9,8 @@
 ### 0.1.1 - 2021-15-19
 
 * Include html templates in wheel
+
+
+### 0.1.2 - 2021-15-19
+
+* Fix MANIFEST issue
