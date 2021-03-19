@@ -8,7 +8,9 @@
 include LICENSE
 include *.rst
 include openclean_notebook/controller/spreadsheet/schema.json
-include openclean_notebook/ui/build/*
+include openclean_notebook/ui/templates/*.json
+include openclean_notebook/ui/build/
+include openclean_notebook/ui/templates/
 recursive-include openclean_notebook *.py
 recursive-include docs *.py
 recursive-include docs *.rst
