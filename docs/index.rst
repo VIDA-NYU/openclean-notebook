@@ -5,10 +5,10 @@
     :alt: openclean-logo
 
 
-Welcome to openclean's Metanome Wrapper Documentation!
-======================================================
+Welcome to openclean's Notebook UI Documentation!
+=================================================
 
-This package provides a graphical user interface for **openclean** to be used in notebook environments like Jupyter Notebooks. For a brief overview please have a look at the `example notebook <https://github.com/VIDA-NYU/openclean-notebook/blob/master/examples/notebooks/Openclean%20Goes%20Jupyter%20-%20Example.ipynb>`_ that shows how to register and run commands.
+This package provides a graphical user interface for **openclean** that can be used to visualize and manipulate datasets in notebook environments like Jupyter Notebooks.
 
 
 ..  toctree::
@@ -16,6 +16,7 @@ This package provides a graphical user interface for **openclean** to be used in
     :caption: Contents:
 
     source/installation
+    source/usage
 
 .. _api-ref:
 

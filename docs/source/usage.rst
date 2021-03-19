@@ -1,42 +1,4 @@
-===============================================
-openclean Notebook Environment - User Interface
-===============================================
-
-.. image:: https://img.shields.io/badge/License-BSD-green.svg
-    :target: https://github.com/VIDA-NYU/openclean-notebook/blob/master/LICENSE
-
-
-.. figure:: https://github.com/VIDA-NYU/openclean-notebook/blob/master/docs/graphics/logo.png
-    :align: center
-    :alt: openclean Logo
-
-
-
-About
-=====
-
-This package provides a graphical user interface for **openclean** that can be used to visualize and manipulate datasets in notebook environments like Jupyter Notebooks.
-
-
-Installation
-============
-
-The package can be installed using ``pip``.
-
-.. code-block:: bash
-
-    pip install openclean-notebook
-
-
-You can use the additional ``[jupyter]`` option to install the Python Jupyter package if you want to use the UI within a Jupyter Notebook.
-
-.. code-block:: bash
-
-    pip install openclean-notebook[jupyter]
-
-
-The notebook UI is a JavaScript bundle that is included in the installed package.
-
+.. _usage-ref:
 
 Usage
 =====
