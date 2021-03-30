@@ -10,7 +10,7 @@ that are rendered in a notebook environment.
 """
 
 from __future__ import annotations
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import pandas as pd
 
@@ -72,7 +72,7 @@ def serialize(name: str, engine: str) -> Dict:
 
 # -- Fetch serialized dataset objects -----------------------------------------
 
-def fetch_metadata(df: pd.DataFrame, dataset: DatasetHandle) -> Dict:
+def fetch_metadata(df: pd.DataFrame, dataset: DatasetHandle, version: Optional[int] = None) -> Dict:
     """Get metadata for the given dataset. Returns an object that contains
     profiling results and a serialization of the operation log.
 
@@ -83,8 +83,10 @@ def fetch_metadata(df: pd.DataFrame, dataset: DatasetHandle) -> Dict:
     dataset: openclean.engine.data.DatasetHandle
         Handle for the dataset that provides access to the metadata store and
         the operation log.
+    version: int, default=None
+        Identifier of the dataset version for which the metadata is fetched.
     """
-    metadata = dataset.metadata()
+    metadata = dataset.metadata(version=version)
     if not metadata.has_annotation(key='profiling'):
         # We only need to invoke the profiler if the profiling metadata
         # does not already exists for the dataset snapshot.

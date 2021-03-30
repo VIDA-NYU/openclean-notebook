@@ -82,13 +82,14 @@ class SpreadSheet extends React.PureComponent<TableSampleProps, TableSampleState
     /*
     * Fetch data for dataset snapshot with the given identfier.
     */
-    fetchData(logEntryId: number, limit: number) {
+    fetchData(logEntryId: number, limit: number, includeMetadata: boolean) {
         this.commSpreadsheetApi.call({
             dataset: this.props.data,
             fetch: {
                 offset: 0,
                 limit: limit,
-                version: logEntryId
+                version: logEntryId,
+                includeMetadata: includeMetadata
             }
         });
     }
@@ -234,7 +235,7 @@ class SpreadSheet extends React.PureComponent<TableSampleProps, TableSampleState
                   {
                     this.state.result.metadata &&
                     <Recipe
-                        fetchData = {(id: number) => {this.fetchData(id, defaultLimit)}}
+                        fetchData = {(id: number, includeMetadata: boolean) => {this.fetchData(id, defaultLimit, includeMetadata)}}
                         operatorProvenance={this.state.result.metadata.log}
                         openRecipeDialog={() => this.openRecipeDialog()}
                         onRollback = {(id: number) => {this.onRollback(id, defaultLimit)}}
