@@ -182,20 +182,20 @@ def spreadsheet_api(request: Dict) -> Dict:
     # Create basic response document.
     row_count = df.shape[0]
     doc = {
-            'dataset': request['dataset'],
-            'columns': list(df.columns),
-            'rows': ds.fetch_rows(
-                df=df,
-                offset=offset,
-                end=min(offset + limit, row_count)
-            ),
-            'offset': offset,
-            'rowCount': row_count,
-            'version': version
-        }
+        'dataset': request['dataset'],
+        'columns': list(df.columns),
+        'rows': ds.fetch_rows(
+            df=df,
+            offset=offset,
+            end=min(offset + limit, row_count)
+        ),
+        'offset': offset,
+        'rowCount': row_count,
+        'version': version
+    }
     # Add metadata to response if the include_metadata flag is True.
     if include_metadata:
-        doc['metadata'] = ds.fetch_metadata(df=df, dataset=dataset)
+        doc['metadata'] = ds.fetch_metadata(df=df, dataset=dataset, version=version)
     # Add serialization of registered evaluation functions if requested.
     if include_library:
         doc['library'] = engine.library_dict()
@@ -261,10 +261,10 @@ def spreadsheet(name: str, engine: str):
     # outside a Jupyter or Colab notebook environment.
     register_handler('spreadsheet', spreadsheet_api)
     view = make_html(
-            template='spreadsheet.html',
-            library='build/opencleanVis.js',
-            data=ds.serialize(name=name, engine=engine)
-        )
+        template='spreadsheet.html',
+        library='build/opencleanVis.js',
+        data=ds.serialize(name=name, engine=engine)
+    )
     # Embed the spreadsheet HTML into the notebook.
     try:  # pragma: no cover
         from IPython.core.display import display, HTML

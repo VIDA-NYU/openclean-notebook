@@ -74,7 +74,7 @@ const useStyles = (theme: Theme) => createStyles({
 });
 
 interface RecipeProps extends WithStyles<typeof useStyles>  {
-    fetchData: (id: number) => void;
+    fetchData: (id: number, includeMetadata: boolean) => void;
     operatorProvenance: OpProv[];
     openRecipeDialog: () => void;
     onRollback: (id: number) => void;
@@ -227,7 +227,7 @@ class Recipe extends React.PureComponent<RecipeProps, RecipeStates> {
                                     title="See current dataset"
                                     className="btn btn-link"
                                     style={{ fontSize: 10, color: '#63518b'}}
-                                    onClick={() => this.props.fetchData(parseInt(operator.id))}
+                                    onClick={() => this.props.fetchData(parseInt(operator.id), true)}
                                 >
                                   <Visibility fontSize="small" style={{color: '#63518b', marginBottom: '-2px', marginRight:1}}/>
                                     View
@@ -245,7 +245,7 @@ class Recipe extends React.PureComponent<RecipeProps, RecipeStates> {
                       <div
                         className="d-flex align-items-stretch"
                         style={{cursor: 'pointer'}}
-                        onClick={() => this.props.fetchData(parseInt(operator.id))}
+                        onClick={() => this.props.fetchData(parseInt(operator.id), false)}
                       >
                         <div style={{margin: 'auto 3px'}}>
                           <Icon.ChevronRight className="feather feather-lg" />
