@@ -14,3 +14,9 @@
 ### 0.1.2 - 2021-15-19
 
 * Fix MANIFEST issue
+
+
+### 0.1.3 - 2021-15-30
+
+* Fix issue with metadata refresh (\#24)
+* Remove Export button from Recipe
