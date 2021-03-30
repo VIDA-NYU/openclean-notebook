@@ -38,7 +38,7 @@
         "react-table": "^7.6.0",
         "react-vega": "^7.4.1",
         "style-loader": "^2.0.0",
-        "vega": "^5.17.0",
+        "vega": "^5.17.3",
         "vega-lite": "^4.16.8"
     },
     "devDependencies": {
