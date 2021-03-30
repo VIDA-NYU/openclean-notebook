@@ -162,19 +162,6 @@ class Recipe extends React.PureComponent<RecipeProps, RecipeStates> {
               >
                 Apply
               </Button>
-              <Button
-                variant="contained"
-                color="default"
-                size="small"
-                title="Export recipe"
-                className={classes.button}
-                style={{padding:1, marginRight: 2}}
-                onClick={() => this.props.openRecipeDialog()}
-                startIcon={<GetAppIcon fontSize="small" style={{marginRight: '-3px'}} />}
-                disabled={this.isCommited()}
-              >
-                Export
-              </Button>
               </div>
 
             </div>
