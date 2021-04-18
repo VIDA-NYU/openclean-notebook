@@ -1,11 +1,11 @@
 import * as React from 'react';
 import * as Icon from 'react-feather';
-import { OpProv, RequestResult } from '../types';
+import { AppliedOperator, OpProv, RequestResult } from '../types';
 import Tabs from '@material-ui/core/Tabs';
 import Tab from '@material-ui/core/Tab';
 import Divider from '@material-ui/core/Divider';
 import Box from '@material-ui/core/Box';
-import { AddOperator, AppliedOperator } from './AddOperator';
+import { AddOperator } from './AddOperator';
 import Snackbar from '@material-ui/core/Snackbar';
 import IconButton from '@material-ui/core/IconButton';
 import CloseIcon from '@material-ui/icons/Close';
@@ -103,14 +103,9 @@ class Recipe extends React.PureComponent<RecipeProps, RecipeStates> {
       return list.some((element) => element)
     }
     handleChange = (event: React.ChangeEvent<{}>, newValue: number) => {
-      console.log('hello tab');
-      console.log(newValue);
-
       this.setState({tabValue: newValue});
     };
     addOperator = (selectedOperator: AppliedOperator) => {
-        console.log('Adding new operator');
-        console.log(selectedOperator);
         this.setState({tabValue: 0, exportedTextsMessage: true, expanded: false});
         this.props.handleDialogExecution(selectedOperator);
     }

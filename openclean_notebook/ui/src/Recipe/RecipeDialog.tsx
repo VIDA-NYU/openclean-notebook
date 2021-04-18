@@ -8,18 +8,9 @@ import DialogTitle from '@material-ui/core/DialogTitle';
 import InputLabel from '@material-ui/core/InputLabel';
 import MenuItem from '@material-ui/core/MenuItem';
 import Select from '@material-ui/core/Select';
-import { FunctionSpec, RequestResult } from '../types';
+import { AppliedOperator, FunctionSpec, RequestResult } from '../types';
 import { FormControlLabel, Switch, TextField } from '@material-ui/core';
 
-export interface AppliedOperator {
-    operatorName: string;
-    operatorIndex: number;
-    columnName: string;
-    columnIndex: number;
-    operator?: FunctionSpec;
-    checked: boolean;
-    newColumnName: string;
-}
 interface RecipeDialogState {
     selectedOperator: AppliedOperator;
 }
@@ -41,6 +32,8 @@ class RecipeDialog extends React.PureComponent <RecipeDialogProps, RecipeDialogS
               columnIndex: 0,
               checked: false,
               newColumnName: '',
+              parameterValue: '',
+              additionalColumn: '',
             },
         };
         this.handleChangeNewColumnName = this.handleChangeNewColumnName.bind(this);
