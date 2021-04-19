@@ -24,10 +24,19 @@ def register_handler(message: str, callback: Callable):
         Handler that is called on incomming messages. The message data will be
         passed to the handler as the only argument.
     """
+    # Function that abstracts notebook connection to javascript
     try:
+        jupyter_setup = True
         register_jupyter_handler(message=message, callback=callback)
-    except NameError:
-        logging.warning('Not in a notebook environment')
+    except Exception:
+        jupyter_setup = False
+    try:
+        colab_setup = True
+        register_colab_handler(message=message, callback=callback)
+    except Exception:
+        colab_setup = False
+    if not jupyter_setup and not colab_setup:
+        print("Error: Cannot find Jupyter/Colab namespace for Python")
 
 
 def register_jupyter_handler(message: str, callback: Callable):
@@ -60,3 +69,29 @@ def register_jupyter_handler(message: str, callback: Callable):
     # a NameError if called outside of a Jupyter Notebook environment.
     comm_manager = get_ipython().kernel.comm_manager  # noqa: F821
     comm_manager.register_target(message, _msg_handler)  # pragma: no cover
+
+def register_colab_handler(message: str, callback: Callable):
+    """Register a given callable to handle incomming requests for the given
+    message name in a Colab Notebook environment. This function raises a
+    NameError if called outside of a Colab Notebook environment.
+
+    Parameters
+    ----------
+    message: string
+        Unique message name (identifier).
+    callback: callable
+        Handler that is called on incomming messages. The message data will be
+        passed to the handler as the only argument.
+
+    Raises
+    ------
+    NameError
+    """
+    # Function that connects javascript call with Colab Notebook
+    from google.colab import output
+    from IPython import display
+    def _recv(msg):
+        # Call the given callback handler with the message data and send
+        # the returned response.
+        return display.JSON(callback(msg)) # Use display.JSON to transfer an object
+    output.register_callback(message, _recv)
