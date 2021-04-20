@@ -243,5 +243,6 @@ export interface Parameter extends ParameterSpec {
     value?: string | number;
 }
 export interface Arg {
-    [id: string]: string | number;
+    name: string;
+    value: string | number | undefined;
 }

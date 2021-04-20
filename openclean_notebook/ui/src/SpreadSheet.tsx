@@ -123,14 +123,13 @@ class SpreadSheet extends React.PureComponent<TableSampleProps, TableSampleState
         if (selectedOperator && selectedOperator.sources && selectedOperator.sources.length>1) {
             functionRef['sources'] = selectedOperator.sources;
         }
+        let parameters: Arg[] = [];
         if (selectedOperator && selectedOperator.parameters && selectedOperator.parameters.length>0) {
-            let argsJSON = {};
-            selectedOperator.parameters.map((para, idx) => {
-                let parameter: any = {};
-                parameter[para.name] = para.value;
-                Object.assign(argsJSON, parameter);
+            selectedOperator.parameters.map((para) => {
+                let parameter = {'name': para.name, 'value': para.value};
+                parameters.push(parameter);
             });
-            functionRef['args'] = argsJSON;
+            functionRef['args'] = parameters;
         }
         return functionRef;
     }
