@@ -109,6 +109,15 @@ export interface CommandRef {
     namespace: string;
 }
 
+export interface FunctionRef {
+    names?: string [];
+    columns?: number[];
+    func?: CommandRef;
+    values?: CommandRef;
+    sources?: number [];
+    args?: any;
+}
+
 // -- Metadata ----------------------------------------------------------------
 
 export interface Metadata {
@@ -216,4 +225,24 @@ export interface CategoricalDataVegaFormat {
 export interface SpreadsheetData {
   metadata: ProfilingResult;
   sample: string[][];
+}
+
+export interface AppliedOperator {
+    operatorName: string;
+    operatorIndex: number;
+    columnName: string;
+    columnIndex: number;
+    operator?: FunctionSpec;
+    checked: boolean;
+    newColumnName: string;
+    parameters?: Parameter[];
+    sources?: number[];
+}
+
+export interface Parameter extends ParameterSpec {
+    value?: string | number;
+}
+export interface Arg {
+    name: string;
+    value: string | number | undefined;
 }

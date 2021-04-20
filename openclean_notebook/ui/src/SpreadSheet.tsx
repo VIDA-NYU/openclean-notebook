@@ -8,9 +8,8 @@
 
 import * as React from 'react';
 import CommAPI from './CommAPI';
-import { CommandRef, FunctionSpec, ProfilingResult, RequestResult, SpreadsheetData } from './types';
+import { AppliedOperator, Arg, CommandRef, FunctionRef, FunctionSpec, ProfilingResult, RequestResult, SpreadsheetData } from './types';
 import {DatasetSample} from './DatasetSample';
-import { AppliedOperator } from './Recipe/RecipeDialog';
 import './SpreadSheet.css';
 import Recipe from './Recipe/Recipe';
 
@@ -118,10 +117,36 @@ class SpreadSheet extends React.PureComponent<TableSampleProps, TableSampleState
     }
 
     /*
+    * Adding the attributes sources and args if they exist
+    */
+    setSourceArgs(selectedOperator: AppliedOperator, functionRef: FunctionRef): FunctionRef {
+        if (selectedOperator && selectedOperator.sources && selectedOperator.sources.length>1) {
+            functionRef['sources'] = selectedOperator.sources;
+        }
+        let parameters: Arg[] = [];
+        if (selectedOperator && selectedOperator.parameters && selectedOperator.parameters.length>0) {
+            selectedOperator.parameters.map((para) => {
+                let parameter = {'name': para.name, 'value': para.value};
+                parameters.push(parameter);
+            });
+            functionRef['args'] = parameters;
+        }
+        return functionRef;
+    }
+
+    /*
      * Apply a given update operation on the dataset. The response will contain
      * the modified data rows and the updated profiling results and command log.
      */
-    onCommandClick(command: FunctionSpec, columnIndex: number, limit: number, addColumn: boolean, newColumnName: string) {
+    onCommandClick(command: FunctionSpec, columnIndex: number, limit: number, selectedOperator: AppliedOperator | undefined ) {
+      let newColumnName: string = '';
+      let addColumn: boolean = false;
+
+      if (selectedOperator !== undefined) {
+        columnIndex = selectedOperator.columnIndex;
+        addColumn = selectedOperator.checked;
+        newColumnName = selectedOperator.newColumnName;
+      }
       const newOperator: Operator = {"name": command.name, "column": 'columnName'};
       let temp = this.state.appliedOperators;
       if(temp.length > 0 ) {
@@ -131,18 +156,26 @@ class SpreadSheet extends React.PureComponent<TableSampleProps, TableSampleState
       }
       this.setState({appliedOperators: temp, recipeDialogStatus: false});
 
-      const commandRef: CommandRef = {name: command.name, namespace: command.namespace ? command.namespace : ''};
+      const commandRef: CommandRef = {
+          name: command.name,
+          namespace: command.namespace ? command.namespace : ''
+        };
+
       let payload = null;
       if (addColumn) {
+          let functionRef: FunctionRef = {
+              names: [newColumnName],
+              sources: [columnIndex],
+              values: commandRef,
+          }
+          if(selectedOperator) {
+            functionRef = this.setSourceArgs(selectedOperator, functionRef)
+          }
           payload = {
               dataset: this.props.data,
               action: {
                   type: 'inscol',
-                  payload: {
-                      names: [newColumnName],
-                      sources: [columnIndex],
-                      values: commandRef
-                  }
+                  payload: functionRef,
               },
               fetch: {
                   offset: this.state.result.offset,
@@ -151,20 +184,24 @@ class SpreadSheet extends React.PureComponent<TableSampleProps, TableSampleState
           };
           this.commSpreadsheetApi.call(payload);
       } else {
-          payload = {
-              dataset: this.props.data,
-              action: {
-                  type: 'update',
-                  payload: {
-                      columns: [columnIndex],
-                      func: commandRef
-                  }
-              },
-              fetch: {
-                  offset: this.state.result.offset,
-                  limit: limit
-              }
-          };
+        let functionRef: FunctionRef = {
+            columns: [columnIndex],
+            func: commandRef
+        }
+        if(selectedOperator) {
+            functionRef = this.setSourceArgs(selectedOperator, functionRef)
+        }
+        payload = {
+            dataset: this.props.data,
+            action: {
+                type: 'update',
+                payload: functionRef,
+            },
+            fetch: {
+                offset: this.state.result.offset,
+                limit: limit
+            }
+        };
       }
       this.commSpreadsheetApi.call(payload);
     }
@@ -243,7 +280,7 @@ class SpreadSheet extends React.PureComponent<TableSampleProps, TableSampleState
                         result={this.state.result}
                         handleDialogExecution={(selectedOperator: AppliedOperator) => {
                           selectedOperator.operator &&
-                            this.onCommandClick(selectedOperator.operator, selectedOperator.columnIndex, defaultLimit, selectedOperator.checked, selectedOperator.newColumnName);
+                            this.onCommandClick(selectedOperator.operator, selectedOperator.columnIndex, defaultLimit, selectedOperator);
                         }}
                         closeRecipeDialog={() => this.closeRecipeDialog()}
                     />
@@ -252,7 +289,7 @@ class SpreadSheet extends React.PureComponent<TableSampleProps, TableSampleState
                         hit={hit}
                         requestResult={this.state.result}
                         onCommandClick={(command, columnIndex) => {
-                            this.onCommandClick(command, columnIndex, defaultLimit, false, '');
+                            this.onCommandClick(command, columnIndex, defaultLimit, undefined);
                         }}
                         onPageClick={(offset) => {
                             this.onPageClick(offset, defaultLimit);

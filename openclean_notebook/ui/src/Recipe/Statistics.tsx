@@ -1,22 +1,8 @@
 import * as React from 'react';
-import Button from '@material-ui/core/Button';
-import InputLabel from '@material-ui/core/InputLabel';
-import MenuItem from '@material-ui/core/MenuItem';
-import Select from '@material-ui/core/Select';
-import { CategoricalDataVegaFormat, FunctionSpec, OpProv, PlotVega, RequestResult } from '../types';
-import { FormControlLabel, Switch, TextField } from '@material-ui/core';
+import { AppliedOperator, CategoricalDataVegaFormat, OpProv, RequestResult } from '../types';
 import {VegaLite} from 'react-vega';
 import {TopLevelSpec as VlSpec} from 'vega-lite';
 
-export interface AppliedOperator {
-    operatorName: string;
-    operatorIndex: number;
-    columnName: string;
-    columnIndex: number;
-    operator?: FunctionSpec;
-    checked: boolean;
-    newColumnName: string;
-}
 interface StatisticsState {
     selectedOperator: AppliedOperator;
 }
@@ -26,7 +12,6 @@ interface StatisticsProps {
     closeRecipeDialog: () => void;
     operatorProvenance: OpProv[];
 }
-
 
 function getEncoding(typePlot: string | undefined) {
     const yContent = {
