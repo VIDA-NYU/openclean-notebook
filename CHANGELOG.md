@@ -20,3 +20,8 @@
 
 * Fix issue with metadata refresh (\#24)
 * Remove Export button from Recipe
+
+
+### 0.1.4 - 2021-04-27
+
+* Bump openclean-core version to 0.4.0.
