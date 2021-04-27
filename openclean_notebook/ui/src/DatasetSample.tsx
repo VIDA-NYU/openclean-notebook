@@ -1,6 +1,11 @@
 import * as React from 'react';
 import {useTable, Column, ColumnInstance, HeaderGroup} from 'react-table';
-import { ColumnMetadata, CommandRef, FunctionSpec, RequestResult, SpreadsheetData } from './types';
+import {
+  ColumnMetadata,
+  FunctionSpec,
+  RequestResult,
+  SpreadsheetData,
+} from './types';
 import './DatasetSample.css';
 import {VegaLite} from 'react-vega';
 import {TopLevelSpec as VlSpec} from 'vega-lite';
@@ -198,45 +203,45 @@ function TableColumnView(props: {
   return (
     <tbody>
       {props.headerGroups &&
-      props.headerGroups[0].headers.map((column, i) => {
-        const columnStatistics = (
-          <td style={{minWidth: 400, textAlign: 'left'}}>
-            <ul style={{listStyle: 'none', columnCount: 2, columnGap: 10}}>
-              {props.hit.metadata.columns[i].num_distinct_values && (
-                <li>Unique Values</li>
-              )}
-              {props.hit.metadata.columns[i].stddev && <li>Std Deviation</li>}
-              {props.hit.metadata.columns[i].mean && <li>Mean</li>}
-              {props.hit.metadata.columns[i].num_distinct_values && (
-                <li>{props.hit.metadata.columns[i].num_distinct_values}</li>
-              )}
-              {props.hit.metadata.columns[i].stddev && (
-                <li>{props.hit.metadata.columns[i].stddev?.toFixed(2)}</li>
-              )}
-              {props.hit.metadata.columns[i].mean && (
-                <li>{props.hit.metadata.columns[i].mean?.toFixed(2)}</li>
-              )}
-            </ul>
-          </td>
-        );
-        return (
-          <tr {...column.getHeaderProps()}>
-            <td style={{textAlign: 'left'}}>
-              <b>{column.render('Header')} </b>
+        props.headerGroups[0].headers.map((column, i) => {
+          const columnStatistics = (
+            <td style={{minWidth: 400, textAlign: 'left'}}>
+              <ul style={{listStyle: 'none', columnCount: 2, columnGap: 10}}>
+                {props.hit.metadata.columns[i].num_distinct_values && (
+                  <li>Unique Values</li>
+                )}
+                {props.hit.metadata.columns[i].stddev && <li>Std Deviation</li>}
+                {props.hit.metadata.columns[i].mean && <li>Mean</li>}
+                {props.hit.metadata.columns[i].num_distinct_values && (
+                  <li>{props.hit.metadata.columns[i].num_distinct_values}</li>
+                )}
+                {props.hit.metadata.columns[i].stddev && (
+                  <li>{props.hit.metadata.columns[i].stddev?.toFixed(2)}</li>
+                )}
+                {props.hit.metadata.columns[i].mean && (
+                  <li>{props.hit.metadata.columns[i].mean?.toFixed(2)}</li>
+                )}
+              </ul>
             </td>
-            <td style={{textAlign: 'left'}}>
-              <TypeBadges column={props.hit.metadata.columns[i]} />
-            </td>
-            <VegaPlot
-              key={`bodyPlot_${i}`}
-              columnMetadata={props.hit.metadata.columns[i]}
-              column={column}
-              isHeader={false}
-            />
-            {columnStatistics}
-          </tr>
-        );
-      })}
+          );
+          return (
+            <tr {...column.getHeaderProps()}>
+              <td style={{textAlign: 'left'}}>
+                <b>{column.render('Header')} </b>
+              </td>
+              <td style={{textAlign: 'left'}}>
+                <TypeBadges column={props.hit.metadata.columns[i]} />
+              </td>
+              <VegaPlot
+                key={`bodyPlot_${i}`}
+                columnMetadata={props.hit.metadata.columns[i]}
+                column={column}
+                isHeader={false}
+              />
+              {columnStatistics}
+            </tr>
+          );
+        })}
     </tbody>
   );
 }
@@ -255,7 +260,7 @@ function TableCompactDetailView(props: {
   return (
     <>
       <thead>
-        {headerGroups.map((headerGroup) => (
+        {headerGroups.map(headerGroup => (
           <tr {...headerGroup.getHeaderGroupProps()}>
             {headerGroup.headers.map((column, i) => (
               <th
@@ -276,20 +281,16 @@ function TableCompactDetailView(props: {
                     <span className="caret"></span>
                   </button>
                   <div className="dropdown-content">
-                    {requestResult.library && requestResult.library.functions.map(command => (
-                      <div
-                        key={command.name}
-                        className="menu-link"
-                        onClick={() =>
-                            props.onCommandClick(
-                              command,
-                              i
-                            )
-                        }
-                      >
-                        {command.name}
-                      </div>
-                    ))}
+                    {requestResult.library &&
+                      requestResult.library.functions.map(command => (
+                        <div
+                          key={command.name}
+                          className="menu-link"
+                          onClick={() => props.onCommandClick(command, i)}
+                        >
+                          {command.name}
+                        </div>
+                      ))}
                   </div>
                 </div>
                 <br />
@@ -299,32 +300,39 @@ function TableCompactDetailView(props: {
           </tr>
         ))}
         {typeView === tableViews.DETAIL &&
-          headerGroups.map((headerGroup, i) => (
-            <tr {...headerGroup.getHeaderGroupProps()} style={{textAlign: 'left'}}>
+          headerGroups.map(headerGroup => (
+            <tr
+              {...headerGroup.getHeaderGroupProps()}
+              style={{textAlign: 'left'}}
+            >
               {headerGroup.headers.map((column, i) => (
                 <th
-                style={{
-                  textAlign: 'left',
-                }}
-              >
-                <VegaPlot
-                  key={`headerPlot_${i}`}
-                  columnMetadata={hit.metadata.columns[i]}
-                  column={column}
-                  isHeader={true}
-                />
-              </th>
+                  style={{
+                    textAlign: 'left',
+                  }}
+                >
+                  <VegaPlot
+                    key={`headerPlot_${i}`}
+                    columnMetadata={hit.metadata.columns[i]}
+                    column={column}
+                    isHeader={true}
+                  />
+                </th>
               ))}
             </tr>
           ))}
       </thead>
       <tbody {...getTableBodyProps()}>
-        {rows.map((row, i) => {
+        {rows.map(row => {
           prepareRow(row);
           return (
             <tr {...row.getRowProps()}>
               {row.cells.map(cell => {
-                return <td {...cell.getCellProps()} style={{textAlign: 'left'}}>{cell.render('Cell')}</td>;
+                return (
+                  <td {...cell.getCellProps()} style={{textAlign: 'left'}}>
+                    {cell.render('Cell')}
+                  </td>
+                );
               })}
             </tr>
           );
@@ -353,34 +361,34 @@ function Table(props: TableProps) {
   });
   return (
     <>
-    <table {...getTableProps()} className="table table-hover small">
-      {typeView === tableViews.COLUMN ? (
-        // Column View
-        <TableColumnView headerGroups={headerGroups} hit={hit} />
-      ) : (
-        // Compact or Detail View
-        <TableCompactDetailView
-          tableProps={props}
-          requestResult={requestResult}
-          onCommandClick={(command, columnIndex) => {
-            props.onCommandClick(command, columnIndex);
-          }}
-        />
-      )}
-    </table>
-    {typeView !== tableViews.COLUMN &&
-      <div className="container" style={{marginTop: '-20px'}}>
-      <div className="text-center">
-        {requestResult.rowCount && (
-          <Pagination
-            totalRows={requestResult.rowCount}
-            onChangePage={(offset) => props.onPageClick(offset)}
-            pageSize={props.pageSize}
+      <table {...getTableProps()} className="table table-hover small">
+        {typeView === tableViews.COLUMN ? (
+          // Column View
+          <TableColumnView headerGroups={headerGroups} hit={hit} />
+        ) : (
+          // Compact or Detail View
+          <TableCompactDetailView
+            tableProps={props}
+            requestResult={requestResult}
+            onCommandClick={(command, columnIndex) => {
+              props.onCommandClick(command, columnIndex);
+            }}
           />
         )}
-      </div>
-    </div>
-    }
+      </table>
+      {typeView !== tableViews.COLUMN && (
+        <div className="container" style={{marginTop: '-20px'}}>
+          <div className="text-center">
+            {requestResult.rowCount && (
+              <Pagination
+                totalRows={requestResult.rowCount}
+                onChangePage={offset => props.onPageClick(offset)}
+                pageSize={props.pageSize}
+              />
+            )}
+          </div>
+        </div>
+      )}
     </>
   );
 }
@@ -466,7 +474,7 @@ class DatasetSample extends React.PureComponent<
               onCommandClick={(command, columnIndex) => {
                 this.props.onCommandClick(command, columnIndex);
               }}
-              onPageClick={(offset) => {
+              onPageClick={offset => {
                 this.props.onPageClick(offset);
               }}
               pageSize={this.props.pageSize}

@@ -47,7 +47,7 @@ export interface Row {
  * outlier values, etc.. via the front-end.
  */
 export interface Library {
-    functions: FunctionSpec[]
+  functions: FunctionSpec[];
 }
 
 /*
@@ -61,13 +61,13 @@ export interface Library {
  * parameters.
  */
 export interface FunctionSpec {
-    columns: number;
-    help?: string;
-    label?: string;
-    name: string;
-    namespace?: string;
-    outputs: number;
-    parameters: ParameterSpec[];
+  columns: number;
+  help?: string;
+  label?: string;
+  name: string;
+  namespace?: string;
+  outputs: number;
+  parameters: ParameterSpec[];
 }
 
 /*
@@ -78,26 +78,26 @@ export interface FunctionSpec {
  * in a UI form.
  */
 export interface ParameterSpec {
-    dtype: ParameterType;
-    name: string;
-    index: number;
-    label?: string;
-    help?: string;
-    defaultValue: unknown;
-    isRequired: boolean;
-    group: string;
+  dtype: ParameterType;
+  name: string;
+  index: number;
+  label?: string;
+  help?: string;
+  defaultValue: unknown;
+  isRequired: boolean;
+  group: string;
 }
 
 /* Enumeration of parameter types. */
 enum ParameterType {
-    PARA_BOOL = 'bool',
-    PARA_FILE = 'file',
-    PARA_FLOAT = 'float',
-    PARA_INT = 'int',
-    PARA_LIST = 'list',
-    PARA_RECORD = 'record',
-    PARA_SELECT = 'select',
-    PARA_STRING = 'string',
+  PARA_BOOL = 'bool',
+  PARA_FILE = 'file',
+  PARA_FLOAT = 'float',
+  PARA_INT = 'int',
+  PARA_LIST = 'list',
+  PARA_RECORD = 'record',
+  PARA_SELECT = 'select',
+  PARA_STRING = 'string',
 }
 
 /*
@@ -105,45 +105,45 @@ enum ParameterType {
  * identified by the combination of command name and namespace.
  */
 export interface CommandRef {
-    name: string;
-    namespace: string;
+  name: string;
+  namespace: string;
 }
 
 export interface FunctionRef {
-    names?: string [];
-    columns?: number[];
-    func?: CommandRef;
-    values?: CommandRef;
-    sources?: number [];
-    args?: any;
+  names?: string[];
+  columns?: number[];
+  func?: CommandRef;
+  values?: CommandRef;
+  sources?: number[];
+  args?: any;
 }
 
 // -- Metadata ----------------------------------------------------------------
 
 export interface Metadata {
-    profiling: ProfilingResult;
-    log: OpProv[];
+  profiling: ProfilingResult;
+  log: OpProv[];
 }
 
 /*
  * Profiling Metadata from the DataMart profiler.
  */
 export interface ProfilingResult {
-    id: number;
-    columns: ColumnMetadata[];
+  id: number;
+  columns: ColumnMetadata[];
 }
 
 export interface ColumnMetadata {
-    name: string;
-    structural_type: string;
-    semantic_types: string[];
-    num_distinct_values?: number;
-    coverage?: Array<{}>;
-    mean?: number;
-    stddev?: number;
-    plot?: PlotVega;
-    temporal_resolution?: string;
-    latlong_pair?: string;
+  name: string;
+  structural_type: string;
+  semantic_types: string[];
+  num_distinct_values?: number;
+  coverage?: Array<{}>;
+  mean?: number;
+  stddev?: number;
+  plot?: PlotVega;
+  temporal_resolution?: string;
+  latlong_pair?: string;
 }
 
 /*
@@ -158,9 +158,9 @@ export interface ColumnMetadata {
  * be rolled back.
  */
 export interface OpProv {
-    id: string;
-    op: OpDescriptor;
-    isCommitted: boolean;
+  id: string;
+  op: OpDescriptor;
+  isCommitted: boolean;
 }
 
 /*
@@ -178,48 +178,48 @@ export interface OpProv {
  * The insert position is only given for operators of type INSCOL.
  */
 export interface OpDescriptor {
-    optype: OpType,
-    name?: string;
-    namespace?: string;
-    columns?: string[],
-    sources?: string[],
-    value?: unknown,
-    pos?: number,
-    parameters?: {name: string; value: string}[]
+  optype: OpType;
+  name?: string;
+  namespace?: string;
+  columns?: string[];
+  sources?: string[];
+  value?: unknown;
+  pos?: number;
+  parameters?: {name: string; value: string}[];
 }
 
 /* Enumeration of operator types. */
 enum OpType {
-    OP_INSCOL = 'inscol',
-    OP_LOAD = 'load',
-    OP_UPDATE = 'update',
-    OP_SAMPLE = 'sample',
+  OP_INSCOL = 'inscol',
+  OP_LOAD = 'load',
+  OP_UPDATE = 'update',
+  OP_SAMPLE = 'sample',
 }
 
 // -- Vega Plots Data ---------------------------------------------------------
 
 export interface PlotVega {
-    type: string;
-    data:
-        | NumericalDataVegaFormat[]
-        | TemporalDataVegaFormat[]
-        | CategoricalDataVegaFormat[];
+  type: string;
+  data:
+    | NumericalDataVegaFormat[]
+    | TemporalDataVegaFormat[]
+    | CategoricalDataVegaFormat[];
 }
 export interface NumericalDataVegaFormat {
-    count: number;
-    bin_start: number;
-    bin_end: number;
+  count: number;
+  bin_start: number;
+  bin_end: number;
 }
 
 export interface TemporalDataVegaFormat {
-    count: number;
-    date_start: string;
-    date_end: string;
+  count: number;
+  date_start: string;
+  date_end: string;
 }
 
 export interface CategoricalDataVegaFormat {
-    count: number;
-    bin: string;
+  count: number;
+  bin: string;
 }
 
 export interface SpreadsheetData {
@@ -228,21 +228,21 @@ export interface SpreadsheetData {
 }
 
 export interface AppliedOperator {
-    operatorName: string;
-    operatorIndex: number;
-    columnName: string;
-    columnIndex: number;
-    operator?: FunctionSpec;
-    checked: boolean;
-    newColumnName: string;
-    parameters?: Parameter[];
-    sources?: number[];
+  operatorName: string;
+  operatorIndex: number;
+  columnName: string;
+  columnIndex: number;
+  operator?: FunctionSpec;
+  checked: boolean;
+  newColumnName: string;
+  parameters?: Parameter[];
+  sources?: number[];
 }
 
 export interface Parameter extends ParameterSpec {
-    value?: string | number;
+  value?: string | number;
 }
 export interface Arg {
-    name: string;
-    value: string | number | undefined;
+  name: string;
+  value: string | number | undefined;
 }

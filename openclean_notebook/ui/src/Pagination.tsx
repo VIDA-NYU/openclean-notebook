@@ -33,7 +33,9 @@ class Pagination extends React.PureComponent<PaginationProps, PaginationState> {
     return {
       pager: {
         currentPage: 0,
-        totalPages: this.props.totalRows ? Math.ceil(this.props.totalRows/this.props.pageSize) : 0,
+        totalPages: this.props.totalRows
+          ? Math.ceil(this.props.totalRows / this.props.pageSize)
+          : 0,
         startPage: 0,
         endPage: 0,
         startIndex: 0,
@@ -79,7 +81,7 @@ class Pagination extends React.PureComponent<PaginationProps, PaginationState> {
     currentPage = currentPage || 1;
 
     // default page size is 10
-    pageSize = pageSize;
+    // pageSize = pageSize;
 
     // calculate total pages
     const totalPages = Math.ceil(totalRows / pageSize);
