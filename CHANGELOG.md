@@ -25,3 +25,8 @@
 ### 0.1.4 - 2021-04-27
 
 * Bump openclean-core version to 0.4.0.
+
+
+### 0.1.5 - 2021-04-28
+
+* Bump datamart-profiler dependency to 0.9.
