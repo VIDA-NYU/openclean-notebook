@@ -1,4 +1,4 @@
 future
 jsonschema==3.2.0
 openclean-core>=0.4.0
-datamart-profiler==0.8.1
+datamart-profiler==0.9

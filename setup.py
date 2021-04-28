@@ -17,7 +17,7 @@ install_requires = [
     'future',
     'jsonschema==3.2.0',
     'openclean-core>=0.4.0',
-    'datamart-profiler==0.8.1'
+    'datamart-profiler==0.9'
 ]
 
 
@@ -29,12 +29,16 @@ tests_require = [
 ]
 
 
+dev_require = ['flake8', 'python-language-server'] + tests_require
+
+
 extras_require = {
     'docs': [
         'Sphinx',
         'sphinx-rtd-theme'
     ],
     'tests': tests_require,
+    'dev': dev_require,
     'jupyter': ['jupyter']
 }
 
