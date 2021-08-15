@@ -36,3 +36,8 @@
 
 * Add missing build for opencleanVis.js in openclean-notebook package.
 * Add unit tests for code coverage completeness.
+
+
+### 0.1.7 - 2021-08-15
+
+* Ensure opencleanVis.js is included in package.
