@@ -246,7 +246,7 @@ def get_eval(engine: OpencleanAPI, func: Any, args: List[Dict]) -> Tuple[Any, Di
 
 # -- Spreadsheet controller ---------------------------------------------------
 
-def spreadsheet(name: str, engine: str):
+def spreadsheet(name: str, engine: str):  # pragma: no cover
     """Embed the spreadsheet view for a given dataset into the notebook
     environment.
 
@@ -266,7 +266,7 @@ def spreadsheet(name: str, engine: str):
         data=ds.serialize(name=name, engine=engine)
     )
     # Embed the spreadsheet HTML into the notebook.
-    try:  # pragma: no cover
+    try:
         from IPython.core.display import display, HTML
         display(HTML(view))
     except ImportError:

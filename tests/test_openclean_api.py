@@ -48,3 +48,24 @@ def test_edit_dataset(mock_pkg_resources, dataset, tmpdir):
     engine.create(source=dataset, name='DS', primary_key='A')
     engine.edit('DS')
     engine.edit('DS', n=1)
+
+
+def test_registry_id_collision():
+    """Test to ensure that collisions for engine identifier during registration
+    are handled properly.
+    """
+    class IDGenerator:
+        def __init__(self):
+            self._count = 0
+
+        def __call__(self, length=None):
+            self._count += 1
+            if self._count < 10:
+                return '0'
+            else:
+                return '1'
+    uid = IDGenerator()
+    engine_1 = DB(uid=uid)
+    assert engine_1.identifier == '0'
+    engine_2 = DB(uid=uid)
+    assert engine_2.identifier == '1'

@@ -189,3 +189,20 @@ def test_rollback_and_commit(engine, validator):
     df = engine.checkout(name=DS_NAME)
     assert list(df.columns) == ['D', 'A', 'B', 'C']
     assert list(df['D']) == [5, 5, 5, 5]
+
+
+def test_unknown_parameter(engine, validator):
+    """Test error for unknown parameter referenced in argument list."""
+    # -- Setup --
+    handle = ds.serialize(name=DS_NAME, engine=engine.identifier)
+    # -- Update values in column 'B' with invalid function arguments.
+    action = {
+        'type': 'update',
+        'payload': {
+            'columns': [2],
+            'func': {'name': 'myadd', 'namespace': 'mylib'},
+            'args': [{'name': 'undefined', 'value': 10}]
+        }
+    }
+    with pytest.raises(ValueError):
+        spreadsheet_api(request(handle, fetch={}, action=action))

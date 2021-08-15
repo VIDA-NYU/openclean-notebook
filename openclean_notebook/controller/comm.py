@@ -9,10 +9,8 @@
 
 from typing import Callable
 
-import logging
 
-
-def register_handler(message: str, callback: Callable):
+def register_handler(message: str, callback: Callable):  # pragma: no cover
     """Register a given callable to handle incomming requests for the given
     message name.
 
@@ -70,7 +68,8 @@ def register_jupyter_handler(message: str, callback: Callable):
     comm_manager = get_ipython().kernel.comm_manager  # noqa: F821
     comm_manager.register_target(message, _msg_handler)  # pragma: no cover
 
-def register_colab_handler(message: str, callback: Callable):
+
+def register_colab_handler(message: str, callback: Callable):  # pragma: no cover
     """Register a given callable to handle incomming requests for the given
     message name in a Colab Notebook environment. This function raises a
     NameError if called outside of a Colab Notebook environment.
@@ -90,8 +89,10 @@ def register_colab_handler(message: str, callback: Callable):
     # Function that connects javascript call with Colab Notebook
     from google.colab import output
     from IPython import display
+
     def _recv(msg):
         # Call the given callback handler with the message data and send
         # the returned response.
-        return display.JSON(callback(msg)) # Use display.JSON to transfer an object
+        return display.JSON(callback(msg))  # Use display.JSON to transfer an object
+
     output.register_callback(message, _recv)

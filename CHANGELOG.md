@@ -30,3 +30,9 @@
 ### 0.1.5 - 2021-04-28
 
 * Bump datamart-profiler dependency to 0.9.
+
+
+### 0.1.6 - 2021-08-15
+
+* Add missing build for opencleanVis.js in openclean-notebook package.
+* Add unit tests for code coverage completeness.

@@ -12,7 +12,7 @@ identified by a unique name. Dataset snapshots are maintained by a datastore.
 from histore.archive.manager.base import ArchiveManager
 from histore.archive.manager.persist import PersistentArchiveManager
 from histore.archive.manager.mem import VolatileArchiveManager
-from typing import Dict, List, Optional, Tuple
+from typing import Callable, Dict, List, Optional, Tuple
 
 import os
 
@@ -103,7 +103,7 @@ class OpencleanAPI(OpencleanEngine):
 
 def DB(
     basedir: Optional[str] = None, create: Optional[bool] = False,
-    cached: Optional[bool] = True
+    cached: Optional[bool] = True, uid: Optional[Callable] = unique_identifier
 ) -> OpencleanAPI:
     """Create an instance of the openclean API for notebook environments.
 
@@ -125,9 +125,9 @@ def DB(
     # Create a unique identifier to register the created engine in the
     # global registry dictionary. Use an 8-character key here. Make sure to
     # account for possible conflicts.
-    engine_id = unique_identifier(8)
+    engine_id = uid(8)
     while engine_id in registry:
-        engine_id = unique_identifier(8)
+        engine_id = uid(8)
     # Create the engine components and the engine instance itself.
     if basedir is not None:
         histore = PersistentArchiveManager(basedir=basedir, create=create)
