@@ -35,3 +35,4 @@
 ### 0.1.6 - 2021-08-15
 
 * Add missing build for opencleanVis.js in openclean-notebook package.
+* Add unit tests for code coverage completeness.
